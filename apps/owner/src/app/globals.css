@@ -127,3 +127,37 @@
     @apply font-sans;
   }
 }
+
+/* Published-page (feature #5) animations — the CSS-only pulse-glow CTA + the Zone-2 scroll fade-in
+   from `plans/site-design/code.html`. Plain CSS keyframes/utilities (not Tailwind theme entries);
+   only the `/preview` published page uses them, and they're inert anywhere `animate-*` isn't applied. */
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(232, 93, 74, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(232, 93, 74, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(232, 93, 74, 0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 1s ease-out forwards;
+}

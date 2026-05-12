@@ -9,6 +9,7 @@
 // the per-variant error list and the "✓ Published" notice need hydration.)
 
 import { useActionState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { publishAction } from '@/lib/builder-actions';
 import type { PublishState } from '@/lib/publish';
@@ -71,6 +72,18 @@ export function PublishSection({
       {state.ok && (
         <p role="status" className="rounded-lg bg-muted px-4 py-3 text-sm">
           ✓ Published — 7 audience-tailored pages generated.
+        </p>
+      )}
+
+      {published && (
+        <p className="text-sm">
+          <Link href="/preview" className="underline underline-offset-2">
+            View your published page →
+          </Link>{' '}
+          <span className="text-muted-foreground">
+            (append <code>?type=</code> — e.g. <code>?type=female-18-30</code> — to preview each
+            audience)
+          </span>
         </p>
       )}
 

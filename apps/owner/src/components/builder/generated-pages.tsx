@@ -4,6 +4,7 @@
 // builder page `router.refresh()`es after a publish / regenerate so this re-renders. The full
 // per-audience page render (the 5-zone design) arrives with feature #5.
 
+import Link from 'next/link';
 import { allVisitorVariants } from '@mizrahitality/contracts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { templateEntry } from '@/lib/templates';
@@ -56,7 +57,17 @@ export function GeneratedPages({
                       </p>
                     )}
                   </div>
-                  {published && <RegenerateButton visitorType={variant} />}
+                  {published && (
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/preview?type=${encodeURIComponent(variant)}`}
+                        className="text-xs underline underline-offset-2"
+                      >
+                        Preview →
+                      </Link>
+                      <RegenerateButton visitorType={variant} />
+                    </div>
+                  )}
                 </li>
               );
             })}

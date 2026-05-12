@@ -1,7 +1,8 @@
 // A read-only preview of the venue's *saved* inputs (name, slug, description, chosen image).
 // Server Component — no interactivity; the builder form `router.refresh()`es after a save so this
-// re-renders with the new content. This is the plain "here's what you typed" preview; the
-// AI-generated, audience-tailored page arrives with feature #4.
+// re-renders with the new content. This is the plain "here's what you typed" preview; when the
+// owner Publishes, AI writes a tailored version of this copy for each audience, and the public page
+// (feature #5) renders the full design.
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isStockImageId, stockImagePath } from '@/lib/stock-images';
@@ -46,8 +47,8 @@ export function VenuePreview({ venue }: { venue: PreviewVenue | null }) {
               <p className="text-sm text-muted-foreground italic">No description yet.</p>
             )}
             <p className="text-xs text-muted-foreground">
-              This is a plain preview of your inputs — your AI-generated, audience-tailored page
-              arrives with feature #4.
+              This is a plain preview of your inputs. When you Publish, AI writes a tailored version
+              of this copy for each audience; the public page (feature #5) renders the full design.
             </p>
           </>
         ) : (

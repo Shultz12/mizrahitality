@@ -3,12 +3,20 @@
 // The venue builder form — the owner's entire input surface: a venue name (English letters +
 // spaces → the slug is derived from it), a free-text description, and one image (the <ImagePicker>:
 // a stock pick or an upload). Submits to `saveVenueAction`; on success it `router.refresh()`es so
-// the sibling <VenuePreview> Server Component re-renders with the saved content. Mirrors the
-// `useActionState` + manual-error-`<p>` pattern from the auth forms (no `form`/`field` primitive).
+// the sibling <VenuePreview> Server Component re-renders with the saved content. The description
+// box also carries an "Enhance with AI" affordance (feature #4): clicking it asks Claude to polish
+// the text via `enhanceDescriptionAction` and shows the suggestion in a panel — "Use this" fills
+// the box (the owner still clicks Save), "Keep mine" dismisses it. Non-destructive: nothing about
+// the suggestion is persisted until a Save. Mirrors the `useActionState` + manual-error-`<p>`
+// pattern from the auth forms (no `form`/`field` primitive).
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { saveVenueAction, type BuilderState } from '@/lib/builder-actions';
+import {
+  enhanceDescriptionAction,
+  saveVenueAction,
+  type BuilderState,
+} from '@/lib/builder-actions';
 import { deriveSlugBase } from '@/lib/slug';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,10 +35,20 @@ type FormVenue = {
   slugLockedAt: Date | null;
 };
 
-export function BuilderForm({ venue }: { venue: FormVenue | null }) {
+export function BuilderForm({
+  venue,
+  aiConfigured,
+}: {
+  venue: FormVenue | null;
+  aiConfigured: boolean;
+}) {
   const [state, formAction, pending] = useActionState(saveVenueAction, initialState);
   const router = useRouter();
   const [typedName, setTypedName] = useState(venue?.name ?? '');
+  const [description, setDescription] = useState(venue?.description ?? '');
+  const [enhancing, startEnhance] = useTransition();
+  const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [enhanceError, setEnhanceError] = useState<string | null>(null);
 
   useEffect(() => {
     if (state.ok) router.refresh();
@@ -42,6 +60,16 @@ export function BuilderForm({ venue }: { venue: FormVenue | null }) {
       ? '(fixed once published)'
       : '(updates when you rename)'
     : '(created when you save)';
+
+  function handleEnhance() {
+    setEnhanceError(null);
+    setSuggestion(null);
+    startEnhance(async () => {
+      const r = await enhanceDescriptionAction(description);
+      if (r.ok) setSuggestion(r.enhanced);
+      else setEnhanceError(r.error);
+    });
+  }
 
   return (
     <form action={formAction} noValidate encType="multipart/form-data" className="space-y-5">
@@ -81,7 +109,8 @@ export function BuilderForm({ venue }: { venue: FormVenue | null }) {
           id="description"
           name="description"
           rows={6}
-          defaultValue={state.values?.description ?? venue?.description ?? ''}
+          value={description}
+          onChange={(e) => setDescription(e.currentTarget.value)}
           aria-invalid={state.fieldErrors?.description ? true : undefined}
           aria-describedby={state.fieldErrors?.description ? 'description-error' : undefined}
         />
@@ -89,6 +118,54 @@ export function BuilderForm({ venue }: { venue: FormVenue | null }) {
           <p id="description-error" className="text-sm text-destructive">
             {state.fieldErrors.description}
           </p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleEnhance}
+            disabled={!aiConfigured || enhancing || description.trim().length === 0}
+          >
+            {enhancing ? 'Enhancing…' : 'Enhance with AI'}
+          </Button>
+          {!aiConfigured && (
+            <p className="text-xs text-muted-foreground">
+              Set ANTHROPIC_API_KEY to use AI enhancement.
+            </p>
+          )}
+        </div>
+
+        {enhanceError && (
+          <p role="alert" className="text-sm text-destructive">
+            {enhanceError}
+          </p>
+        )}
+
+        {suggestion !== null && (
+          <div className="space-y-2 rounded-lg border bg-muted/40 p-3">
+            <p className="text-xs font-medium text-muted-foreground">Suggested rewrite</p>
+            <p className="text-sm whitespace-pre-wrap">{suggestion}</p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  setDescription(suggestion);
+                  setSuggestion(null);
+                }}
+              >
+                Use this
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setSuggestion(null)}>
+                Keep mine
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              &ldquo;Use this&rdquo; only fills the box — click Save changes to keep it.
+            </p>
+          </div>
         )}
       </div>
 

@@ -22,13 +22,13 @@ VISION.md, PRD.md    # product docs — the what and why
 NOTES.md             # build order, decisions, open questions
 ```
 
-> Status: in progress. Landed so far — the monorepo foundation (feature #1: pnpm workspace, `@mizrahitality/contracts`, both Next.js App-Router/Tailwind-v4 app skeletons, shadcn/ui in `apps/owner`, ESLint flat config / Prettier / Vitest, the root scripts below), owner authentication (feature #2: `Owner` / `Venue` / `Session` Prisma models with a migration history, email + password sign-up / sign-in / sign-out over `httpOnly` cookie sessions), and the venue builder (feature #3: name → derived slug, free-text description, one image uploaded **or** picked from 3 supplied stock images; a saved-content preview; an authed dashboard + nav; a `Publish` stub that flips `publishState` and freezes the slug — audience-tailored page generation is feature #4). The AI publish steps, the SSR published page, the REST API, the dashboard, and the customer site arrive with later features (`NOTES.md` → "Build order").
+> Status: in progress. Landed so far — the monorepo foundation (feature #1: pnpm workspace, `@mizrahitality/contracts`, both Next.js App-Router/Tailwind-v4 app skeletons, shadcn/ui in `apps/owner`, ESLint flat config / Prettier / Vitest, the root scripts below), owner authentication (feature #2: `Owner` / `Venue` / `Session` Prisma models with a migration history, email + password sign-up / sign-in / sign-out over `httpOnly` cookie sessions), the venue builder (feature #3: name → derived slug, free-text description, one image uploaded **or** picked from 3 supplied stock images; a saved-content preview; an authed dashboard + nav; a `Publish` stub that flips `publishState` and freezes the slug), and AI copy + variants (feature #4: "Enhance with AI" polishes the description text, and Publish generates the 7 audience-tailored copy bundles — one per visitor type — validates them, and stores them as `PageVariant` rows, all-or-nothing with retries; a read-only "Generated pages" list with per-audience regenerate). The SSR published page, the REST API, the dashboard, and the customer site arrive with later features (`NOTES.md` → "Build order").
 
 ## Prerequisites
 
 - Node 22 LTS (see `.nvmrc`)
 - pnpm via Corepack: `corepack enable && corepack install`
-- An Anthropic API key for the publish-time AI steps (`ANTHROPIC_API_KEY` in `apps/owner/.env`) — not needed to run the skeleton
+- An Anthropic API key (`ANTHROPIC_API_KEY` in `apps/owner/.env`) — not needed to install / build / run / test the app, but needed to use "Enhance with AI" and to Publish (which generates the 7 audience-tailored pages); without it those features show a "not configured" hint
 
 ## Setup & run
 

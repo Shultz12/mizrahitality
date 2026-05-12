@@ -1,20 +1,42 @@
 'use server';
 
-// Server Actions for the venue builder (feature #3): save the owner's three inputs (name →
+// Server Actions for the venue builder. `saveVenueAction` persists the owner's three inputs (name →
 // derived slug, free-text description, one image — a stock pick or an upload) onto their single
-// `Venue`, and a publish stub. Thin orchestration over `auth.ts` + `validation.ts` + `slug.ts` +
-// `uploads.ts` + `stock-images.ts` + Prisma — exercised by the manual click-through plus the
-// helper unit/integration tests, not by direct action tests (actions need a request context for
-// `cookies()`). `redirect()` throws a control-flow signal, so it's never inside a try/catch.
+// `Venue` (feature #3). Feature #4 adds the AI surface: `publishAction` — a stateful `useActionState`
+// action that delegates to the publish pipeline (lib/publish.ts → generates + validates the 7
+// PageVariant copy bundles, all-or-nothing, with retries); `enhanceDescriptionAction` — polishes
+// the description text (the owner accepts or keeps their own); `regenerateVariantAction` — re-runs
+// one published variant (re-validates before swapping). The AI steps live in lib/ai/ (a lazily-
+// constructed Anthropic client + the two text steps); the prompt assets are transcribed in
+// lib/templates.ts. Thin orchestration over auth.ts / validation.ts / slug.ts / uploads.ts /
+// stock-images.ts / lib/ai / lib/publish / Prisma — exercised by the manual click-through plus the
+// helper unit/integration tests (publish.integration.test.ts targets `runPublishPipeline`), not by
+// direct action tests (actions need a request context for `cookies()`).
 
-import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
+import {
+  SLOT_SCHEMA_VERSION,
+  isVisitorType,
+  type CopyBundleResult,
+} from '@mizrahitality/contracts';
 import { prisma } from './prisma';
 import { requireOwner } from './auth';
-import { validateVenueDescription, validateVenueName } from './validation';
+import {
+  VENUE_DESCRIPTION_MAX_LENGTH,
+  validateVenueDescription,
+  validateVenueName,
+} from './validation';
 import { deriveSlugBase, nextAvailableSlug } from './slug';
 import { isStockImageId } from './stock-images';
 import { UploadValidationError, deleteUploadByKey, saveVenueUpload } from './uploads';
+import {
+  AiNotConfiguredError,
+  enhanceDescription,
+  generateVariantCopy,
+  isAiConfigured,
+} from './ai';
+import { runPublishPipeline, type PublishState } from './publish';
 
 export type BuilderState = {
   /** Top-level error (rare — unexpected failure). */
@@ -211,20 +233,114 @@ export async function saveVenueAction(
   return { ok: true };
 }
 
-export async function publishAction(): Promise<void> {
+// ---------------------------------------------------------------------------
+// Feature #4 — the AI surface: publish (generate the 7 variants), enhance, regenerate.
+// ---------------------------------------------------------------------------
+
+/**
+ * Publish — a stateful `useActionState` action. Delegates to the publish pipeline (lib/publish.ts):
+ * generates + validates all 7 audience copy bundles and commits transactionally, or changes nothing
+ * and reports which variants failed. No `redirect()` — `<PublishSection>` shows the result inline
+ * and `router.refresh()`es; `revalidatePath('/dashboard')` updates the dashboard's `Status:` line.
+ */
+export async function publishAction(
+  _prev: PublishState,
+  _formData: FormData,
+): Promise<PublishState> {
+  const state = await runPublishPipeline(await requireOwner());
+  if (state.ok) revalidatePath('/dashboard');
+  return state;
+}
+
+/**
+ * Enhance the description text with AI — called directly from `<BuilderForm>` (takes an arg, returns
+ * data, persists nothing). Signed-in gate only (no venue required — works pre-create). The owner
+ * reviews the suggestion client-side and clicks "Use this" (fills the textarea; still Saves) or
+ * "Keep mine" (dismiss). Persists nothing — `saveVenueAction` (→ `validateVenueDescription`) does that.
+ */
+export async function enhanceDescriptionAction(
+  text: string,
+): Promise<{ ok: true; enhanced: string } | { ok: false; error: string }> {
+  await requireOwner();
+  if (!isAiConfigured())
+    return { ok: false, error: 'AI is not configured — set ANTHROPIC_API_KEY to use this.' };
+
+  const trimmed = text.trim();
+  if (!trimmed) return { ok: false, error: 'Write a few words first, then enhance.' };
+  if (trimmed.length > VENUE_DESCRIPTION_MAX_LENGTH) {
+    return {
+      ok: false,
+      error: `Description is too long (max ${VENUE_DESCRIPTION_MAX_LENGTH} characters).`,
+    };
+  }
+
+  try {
+    return { ok: true, enhanced: await enhanceDescription(trimmed) };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof AiNotConfiguredError
+          ? 'AI is not configured — set ANTHROPIC_API_KEY to use this.'
+          : 'The AI service is unavailable right now — please try again.',
+    };
+  }
+}
+
+/**
+ * Regenerate one published audience page — called directly from `<RegenerateButton>`. Re-runs the
+ * variant copy step, re-validates, and swaps just that `PageVariant` row. Only operates on a
+ * published venue (full Re-publish handles the unpublished / all-7 case).
+ */
+export async function regenerateVariantAction(
+  visitorType: string,
+): Promise<{ ok: true } | { ok: false; error: string; errors?: string[] }> {
   const owner = await requireOwner();
-  if (!owner.venue) redirect('/builder');
+  if (!owner.venue) return { ok: false, error: 'Create your venue first.' };
+  const venue = owner.venue;
+  if (venue.publishState !== 'published') {
+    return { ok: false, error: 'Publish first — then you can regenerate individual pages.' };
+  }
+  if (!isVisitorType(visitorType)) return { ok: false, error: 'Unknown audience.' };
+  if (!isAiConfigured())
+    return { ok: false, error: 'AI is not configured — set ANTHROPIC_API_KEY.' };
 
-  await prisma.venue.update({
-    where: { id: owner.venue.id },
-    data: {
-      publishState: 'published',
-      publishedAt: new Date(),
-      // Freeze the slug at first publish; re-publishes keep the existing lock.
-      slugLockedAt: owner.venue.slugLockedAt ?? new Date(),
-    },
-  });
-  // TODO(feature #4 ai-copy-and-variants): generate + structurally validate the 7 PageVariant rows here before flipping publishState.
+  let result: CopyBundleResult;
+  try {
+    result = await generateVariantCopy({
+      venueName: venue.name,
+      description: venue.description,
+      variant: visitorType,
+    });
+  } catch {
+    return { ok: false, error: 'The AI service is unavailable right now — please try again.' };
+  }
+  if (!result.ok) {
+    return {
+      ok: false,
+      error: 'The regenerated copy failed validation — please try again.',
+      errors: result.errors,
+    };
+  }
 
-  redirect('/builder?published=1');
+  try {
+    await prisma.pageVariant.update({
+      where: { venueId_visitorType: { venueId: venue.id, visitorType } },
+      data: {
+        content: {
+          schemaVersion: SLOT_SCHEMA_VERSION,
+          copy: result.value,
+        } as unknown as Prisma.InputJsonValue,
+      },
+    });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+      return { ok: false, error: 'That page is missing — re-publish to regenerate all of them.' };
+    }
+    throw err;
+  }
+
+  revalidatePath('/builder');
+  revalidatePath('/dashboard');
+  return { ok: true };
 }

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Editorial - Premium Landing Page</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(232, 93, 74, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(232, 93, 74, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(232, 93, 74, 0); }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes fade-in-up {
+            from {
+                opacity: 0;
+                transform: translateY(1rem);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fade-in-up 1s ease-out forwards;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#faf7f2",
+                        "primary-fixed": "#e5e2dd",
+                        "secondary-fixed-dim": "#cdc5bf",
+                        "secondary-container": "#e7ded8",
+                        "surface": "#fdf8f7",
+                        "surface-container-high": "#ebe7e6",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#494647",
+                        "inverse-on-surface": "#f4f0ef",
+                        "surface-tint": "#5f5e5b",
+                        "bg-primary-dark": "#141210",
+                        "inverse-surface": "#313030",
+                        "outline-variant": "#c8c7be",
+                        "on-background": "#1c1b1b",
+                        "tertiary-container": "#fdf6f7",
+                        "surface-variant": "#e5e2e0",
+                        "text-on-dark": "#FAF7F2",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#c8c6c2",
+                        "inverse-primary": "#c8c6c2",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed": "#e7e1e2",
+                        "surface-bright": "#fdf8f7",
+                        "on-primary-fixed-variant": "#474743",
+                        "tertiary-fixed-dim": "#cbc5c6",
+                        "bg-primary-light": "#FAF7F2",
+                        "on-surface": "#1c1b1b",
+                        "surface-container-highest": "#e5e2e0",
+                        "on-secondary-fixed": "#1f1b17",
+                        "secondary-fixed": "#eae1db",
+                        "on-secondary-fixed-variant": "#4b4641",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#72716d",
+                        "surface-container": "#f1edec",
+                        "tertiary": "#615d5e",
+                        "background": "#fdf8f7",
+                        "surface-container-low": "#f7f3f1",
+                        "on-primary-fixed": "#1c1c19",
+                        "surface-dim": "#ddd9d8",
+                        "on-tertiary": "#ffffff",
+                        "accent-coral": "#E85D4A",
+                        "text-main": "#2C2824",
+                        "on-secondary-container": "#67625d",
+                        "on-surface-variant": "#474741",
+                        "secondary": "#635d58",
+                        "on-tertiary-fixed": "#1d1b1c",
+                        "on-tertiary-container": "#757071",
+                        "outline": "#787770",
+                        "primary": "#5f5e5b",
+                        "on-error": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "section-gap": "120px",
+                        "margin-mobile": "24px",
+                        "margin-desktop": "80px",
+                        "gutter": "24px",
+                        "container-max": "1200px"
+                    },
+                    "fontFamily": {
+                        "h1-mobile": ["Playfair Display"],
+                        "label-caps": ["Inter"],
+                        "h2-desktop": ["Playfair Display"],
+                        "h2-mobile": ["Playfair Display"],
+                        "h1-desktop": ["Playfair Display"],
+                        "body-lg": ["Inter"],
+                        "h3": ["Playfair Display"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "h1-mobile": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "label-caps": ["14px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                        "h2-desktop": ["48px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "h2-mobile": ["32px", {"lineHeight": "1.25", "fontWeight": "600"}],
+                        "h1-desktop": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "h3": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-primary-container text-text-main w-full flex flex-col antialiased pb-20 md:pb-0">
+<!-- TopAppBar from JSON -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-desktop py-10 max-w-container-max mx-auto bg-transparent flat no shadows">
+<h1 class="font-h3 text-h3 text-text-main dark:text-text-on-dark tracking-tight">The Editorial</h1>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 w-full flex flex-col md:flex-row relative min-h-screen">
+<!-- Mobile Background Image Setup (Only visible md:hidden as bg) -->
+<div class="absolute inset-0 z-0 md:hidden block">
+<img alt="Background Image" class="w-full h-full object-cover" data-alt="A sophisticated, high-contrast black and white photograph of an antique typewriter sitting on a minimalist desk. The scene is illuminated by soft, natural window light creating deep, moody shadows that contrast with the bright, pristine white paper. The overall aesthetic is elegant, timeless, and perfectly suited for a premium editorial brand identity focused on long-form narrative." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQXi2MCTmQQTA6NFkLXkiWjAxxrid7lBlETROAHP5kzQ1jyhAAYPkkFIn6G3lVQs6W-xoDSh05mMKeLvPdd7dUOBYGC7kwrtaQNmXGwId8ad_UFyWFf-96-5ArHaPGuY9bBYzOUzCVtMJ9k029pHYdaDX5Z0_6G62th_AYCKtwlUzjzchpGEXrivxiu3I6QZIIEmz-TwAbzHjO2t18pLNteIMiSwZRh_p1sCAFoSon-MpwNJI0Xwk0Wm0G-uxbL1CPTWmN4g3jXA"/>
+<!-- Mobile Gradient Overlay -->
+<div class="absolute inset-0 bg-gradient-to-t from-bg-primary-dark/80 via-bg-primary-dark/40 to-transparent"></div>
+</div>
+<!-- Left Column: Content (45% on Desktop, Full on Mobile) -->
+<section class="relative z-10 w-full md:w-[45%] flex flex-col justify-end md:justify-center px-margin-mobile md:px-[80px] pb-12 md:pb-0 bg-transparent md:bg-primary-container text-on-primary md:text-text-main transition-colors duration-300 min-h-screen">
+<div class="max-w-md">
+<h1 class="font-h1-mobile text-h1-mobile md:font-h1-desktop md:text-h1-desktop mb-6 text-on-primary md:text-text-main">[Primary Brand or Product Name]</h1>
+<h2 class="font-h2-mobile text-h2-mobile md:font-h2-desktop md:text-h2-desktop mb-8 text-on-primary/90 md:text-text-main/80">[Core Value Proposition or Audience Dream Outcome]</h2><div class="flex flex-col gap-2 mb-8">
+<button class="bg-[#E85D4A] text-on-primary font-label-caps text-label-caps px-8 min-h-[48px] min-w-[48px] flex items-center justify-center rounded hover:scale-[1.03] animate-pulse-glow transition-all duration-300 w-fit" id="hero-cta">[Desired Action Verb]</button>
+<p class="font-body-md text-[12px] opacity-70 md:text-text-main/60">[Friction-Reducing Trust Statement regarding speed, cost, or ease]</p>
+</div>
+<p class="font-body-lg text-body-lg mb-10 text-on-primary/80 md:text-text-main/70">[A hook acknowledging the target audience's specific desires or pain points]</p>
+</div>
+</section>
+<!-- Right Column: Hero Media (55% on Desktop, Hidden as column on Mobile) -->
+<section class="hidden md:block md:w-[55%] relative min-h-screen">
+<div class="w-full h-full bg-surface-container flex items-center justify-center text-on-surface-variant font-body-md">[Image here]</div>
+</section>
+</main>
+<section class="bg-white dark:bg-bg-primary-dark py-section-gap px-margin-mobile md:px-margin-desktop animate-fade-in-up">
+<div class="max-w-2xl mx-auto font-body-md text-body-md text-text-main dark:text-text-on-dark space-y-8">
+<p>[A hook acknowledging the target audience's specific desires or pain points]</p>
+<ul class="list-disc pl-6 space-y-4 marker:text-accent-coral">
+<li>[Feature/Solution 1]</li>
+<li>[Feature/Solution 2]</li>
+<li>[Feature/Solution 3]</li>
+</ul>
+<p>[A final emotional nudge driving the user toward the primary action]</p>
+</div>
+</section>
+<section class="w-full bg-accent-coral/10 py-16 px-margin-mobile md:px-margin-desktop">
+<div class="max-w-container-max mx-auto text-center">
+<p class="font-h3 text-h3 italic text-text-main dark:text-text-on-dark">
+      [Strong Social Proof Metric or High-Impact Emotional Claim]
+    </p>
+</div>
+</section>
+<!-- Final CTA Section -->
+<section class="py-section-gap px-margin-mobile md:px-margin-desktop flex flex-col items-center justify-center text-center">
+<h3 class="font-h3 text-h3 text-text-main dark:text-text-on-dark mb-8 max-w-2xl">
+[Final Motivational Hook to incite urgency]
+</h3>
+<button class="bg-[#E85D4A] text-on-primary font-label-caps text-label-caps px-8 min-h-[48px] min-w-[48px] flex items-center justify-center rounded hover:scale-[1.03] animate-pulse-glow transition-all duration-300 w-fit mb-4">
+[Desired Action Verb]
+</button>
+<p class="font-body-md text-[12px] opacity-70 text-text-main/60 dark:text-text-on-dark/60">
+[Secondary Trust Statement or Guarantee]
+</p>
+</section>
+<!-- Footer -->
+<footer class="w-full py-8 px-margin-mobile md:px-margin-desktop border-t border-outline-variant/20">
+<div class="max-w-container-max mx-auto text-center font-body-md text-[12px] text-text-main/50 dark:text-text-on-dark/50 flex flex-col md:flex-row justify-center md:justify-between items-center gap-2">
+<span>[Brand Name]</span>
+<span>Powered by [Platform/Architecture Name]</span>
+</div>
+</footer>
+<!-- Sticky Mobile Conversion Bar -->
+<div class="fixed bottom-0 left-0 w-full z-[100] md:hidden bg-surface/80 backdrop-blur-md border-t border-outline-variant/20 px-margin-mobile py-3 flex justify-between items-center transition-transform duration-300 transform translate-y-full" id="sticky-mobile-bar">
+<div class="font-label-caps text-[14px] uppercase tracking-wider font-semibold text-text-main">
+[Brand Name]
+</div>
+<button class="bg-accent-coral text-on-primary font-label-caps text-[12px] px-6 py-2 rounded shadow-lg active:scale-95 transition-all">
+    [Desired Action Verb]
+  </button>
+</div>
+<script>
+  window.addEventListener('scroll', () => {
+    const heroCta = document.getElementById('hero-cta');
+    const stickyBar = document.getElementById('sticky-mobile-bar');
+    if (heroCta && stickyBar) {
+      const ctaRect = heroCta.getBoundingClientRect();
+      if (ctaRect.bottom < 0) {
+        stickyBar.classList.remove('translate-y-full');
+        stickyBar.classList.add('translate-y-0');
+      } else {
+        stickyBar.classList.add('translate-y-full');
+        stickyBar.classList.remove('translate-y-0');
+      }
+    }
+  });
+</script>
+</body></html>

@@ -5,5 +5,6 @@
 
 export * from './visitor';
 export * from './slots';
+export * from './copy';
 export * from './analytics';
 export * from './errors';

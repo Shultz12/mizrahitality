@@ -22,7 +22,7 @@ VISION.md, PRD.md    # product docs — the what and why
 NOTES.md             # build order, decisions, open questions
 ```
 
-> Status: in progress. Landed so far — the monorepo foundation (feature #1: pnpm workspace, `@mizrahitality/contracts`, both Next.js App-Router/Tailwind-v4 app skeletons, shadcn/ui in `apps/owner`, ESLint flat config / Prettier / Vitest, the root scripts below) and owner authentication (feature #2: `Owner` / `Venue` / `Session` Prisma models with a migration history, email + password sign-up / sign-in / sign-out over `httpOnly` cookie sessions, an owner dashboard placeholder). The venue builder, the AI publish steps, the REST API, the dashboard, and the customer site arrive with later features (`NOTES.md` → "Build order").
+> Status: in progress. Landed so far — the monorepo foundation (feature #1: pnpm workspace, `@mizrahitality/contracts`, both Next.js App-Router/Tailwind-v4 app skeletons, shadcn/ui in `apps/owner`, ESLint flat config / Prettier / Vitest, the root scripts below), owner authentication (feature #2: `Owner` / `Venue` / `Session` Prisma models with a migration history, email + password sign-up / sign-in / sign-out over `httpOnly` cookie sessions), and the venue builder (feature #3: name → derived slug, free-text description, one image uploaded **or** picked from 3 supplied stock images; a saved-content preview; an authed dashboard + nav; a `Publish` stub that flips `publishState` and freezes the slug — audience-tailored page generation is feature #4). The AI publish steps, the SSR published page, the REST API, the dashboard, and the customer site arrive with later features (`NOTES.md` → "Build order").
 
 ## Prerequisites
 
@@ -42,6 +42,8 @@ pnpm dev                                      # run both apps — owner :5111, c
 ```
 
 Then open the owner platform at `http://localhost:5111` and a venue's public page at `http://localhost:5112/<slug>`.
+
+Uploaded venue images are written to `apps/owner/uploads/` (gitignored, created on demand) and served by the owner app at `/uploads/...`; the 3 supplied stock images are committed under `apps/owner/public/stock/`.
 
 ## Scripts (root)
 

@@ -13,9 +13,14 @@ export default async function Home() {
       </p>
       <div className="mt-6 flex gap-3">
         {owner ? (
-          <Link href="/dashboard" className={buttonVariants()}>
-            Go to your dashboard
-          </Link>
+          <>
+            <Link href="/dashboard" className={buttonVariants()}>
+              Go to your dashboard
+            </Link>
+            <Link href="/builder" className={buttonVariants({ variant: 'outline' })}>
+              Open the builder
+            </Link>
+          </>
         ) : (
           <>
             <Link href="/sign-up" className={buttonVariants()}>

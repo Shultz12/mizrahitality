@@ -25,6 +25,9 @@ apps/owner/dev.db-journal
 apps/owner/prisma/vitest-tmp.db
 apps/owner/prisma/vitest-tmp.db-journal
 
+# Uploaded venue images (served by the owner app at /uploads/...)
+apps/owner/uploads/
+
 # OS / editor
 .DS_Store
 Thumbs.db

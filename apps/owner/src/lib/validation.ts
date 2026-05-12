@@ -46,3 +46,56 @@ export function validatePassword(raw: string): ValidationResult {
   }
   return { ok: true, value: raw };
 }
+
+// ---------------------------------------------------------------------------
+// Venue builder (feature #3) — name + description.
+// ---------------------------------------------------------------------------
+
+/** A venue name must be at least this many characters (after trim/whitespace-collapse). */
+export const VENUE_NAME_MIN_LENGTH = 1;
+/** Upper bound on a venue name — keeps slugs and headings sane. */
+export const VENUE_NAME_MAX_LENGTH = 60;
+/** Upper bound on the free-text description; generous, just a sanity cap. */
+export const VENUE_DESCRIPTION_MAX_LENGTH = 5000;
+
+// English letters in space-separated words: "Blue Lagoon", "Cafe". No leading/trailing/double
+// spaces (callers normalize first), no digits, punctuation, or accented characters.
+const VENUE_NAME_RE = /^[A-Za-z]+( [A-Za-z]+)*$/;
+
+/** Canonical venue name: trim, then collapse internal whitespace runs to single ASCII spaces. */
+export function normalizeVenueName(raw: string): string {
+  return raw.trim().replace(/\s+/g, ' ');
+}
+
+export function validateVenueName(raw: string): ValidationResult {
+  const value = normalizeVenueName(raw);
+  if (value.length < VENUE_NAME_MIN_LENGTH) {
+    return { ok: false, message: 'Venue name is required.' };
+  }
+  if (value.length > VENUE_NAME_MAX_LENGTH) {
+    return {
+      ok: false,
+      message: `Venue name is too long (max ${VENUE_NAME_MAX_LENGTH} characters).`,
+    };
+  }
+  if (!VENUE_NAME_RE.test(value)) {
+    return {
+      ok: false,
+      message:
+        'Venue name can only contain English letters and spaces — no numbers, punctuation, or accented characters.',
+    };
+  }
+  return { ok: true, value };
+}
+
+/** Description: trimmed, may be empty, capped at {@link VENUE_DESCRIPTION_MAX_LENGTH} chars. */
+export function validateVenueDescription(raw: string): ValidationResult {
+  const value = raw.trim();
+  if (value.length > VENUE_DESCRIPTION_MAX_LENGTH) {
+    return {
+      ok: false,
+      message: `Description is too long (max ${VENUE_DESCRIPTION_MAX_LENGTH} characters).`,
+    };
+  }
+  return { ok: true, value };
+}

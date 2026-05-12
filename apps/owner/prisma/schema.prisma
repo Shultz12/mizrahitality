@@ -1,7 +1,10 @@
 // Mizrahitality — owner database schema.
 //
-// Owner / Venue (1—1, content fields added by the builder in #3) / Session land in feature #2
-// (owner-auth). Schema changes go through the `update-database` skill; see prisma/CHANGELOG.md.
+// Owner / Venue (1—1) / Session land in feature #2 (owner-auth). Feature #3 (site-builder) adds
+// the Venue content columns (name, slug, description, image) + a publish-flow skeleton
+// (publishState / publishedAt / slugLockedAt) and the (still-empty) PageVariant table —
+// `PageVariant.content` is `Json`, shape TBD by feature #4 (ai-copy-and-variants).
+// Schema changes go through the `update-database` skill; see prisma/CHANGELOG.md.
 
 generator client {
   provider = "prisma-client-js"
@@ -26,14 +29,42 @@ model Owner {
 }
 
 model Venue {
-  id        String   @id @default(cuid())
-  ownerId   String   @unique
-  owner     Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  ownerId String @unique
+  owner   Owner  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // --- content (feature #3 site-builder) ---
+  name        String // English letters + spaces; 1–60 chars (validated in app code)
+  slug        String @unique // derived from name: lowercased, spaces removed, numeric suffix on collision
+  description String @default("") // free text; may be empty until the owner writes it
+  imageKind   String // 'stock' | 'upload'
+  imageValue  String // stock: a stock-image id (e.g. 'atlantis-paradise'); upload: relative key 'venues/<venueId>/<file>'
+
+  // --- publish-flow skeleton (#3 stub; #4 fills generation) ---
+  publishState String    @default("draft") // 'draft' | 'publishing' | 'published'
+  slugLockedAt DateTime? // set at first publish; once set the slug is immutable
+  publishedAt  DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Content fields (name, slug, description, image) land in feature #3 (site-builder).
+  variants PageVariant[]
+
   @@map("venues")
+}
+
+model PageVariant {
+  id          String   @id @default(cuid())
+  venueId     String
+  venue       Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  visitorType String // one of the 7 VisitorType values
+  content     Json // populated-slot blob — shape intentionally unmodeled until #4 (ai-copy-and-variants)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([venueId, visitorType])
+  @@index([venueId])
+  @@map("page_variants")
 }
 
 model Session {

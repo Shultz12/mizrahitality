@@ -22,7 +22,7 @@ VISION.md, PRD.md    # product docs — the what and why
 NOTES.md             # build order, decisions, open questions
 ```
 
-> Status: scaffolded. The monorepo foundation (feature #1) has landed — pnpm workspace, `@mizrahitality/contracts`, both Next.js (App Router, Tailwind v4) app skeletons, shadcn/ui in `apps/owner`, Prisma + SQLite scaffold (empty schema), ESLint flat config / Prettier / Vitest, and the root scripts below. Real accounts, the builder, the REST API, and the dashboard arrive with later features (`NOTES.md` → "Build order").
+> Status: in progress. Landed so far — the monorepo foundation (feature #1: pnpm workspace, `@mizrahitality/contracts`, both Next.js App-Router/Tailwind-v4 app skeletons, shadcn/ui in `apps/owner`, ESLint flat config / Prettier / Vitest, the root scripts below) and owner authentication (feature #2: `Owner` / `Venue` / `Session` Prisma models with a migration history, email + password sign-up / sign-in / sign-out over `httpOnly` cookie sessions, an owner dashboard placeholder). The venue builder, the AI publish steps, the REST API, the dashboard, and the customer site arrive with later features (`NOTES.md` → "Build order").
 
 ## Prerequisites
 
@@ -34,9 +34,9 @@ NOTES.md             # build order, decisions, open questions
 
 ```bash
 pnpm install                                  # install workspace deps
-cp apps/owner/.env.example apps/owner/.env       # then fill in values
+cp apps/owner/.env.example apps/owner/.env       # required — apps/owner needs DATABASE_URL + SESSION_SECRET (the example ships a dev SESSION_SECRET)
 cp apps/customer/.env.example apps/customer/.env
-pnpm db:push                                  # create the SQLite database
+pnpm db:migrate                               # create the SQLite database + apply migrations
 pnpm seed                                     # populate demo data (Venue #1 history, Venue #2 empty)
 pnpm dev                                      # run both apps — owner :5111, customer :5112
 ```
@@ -54,8 +54,8 @@ Then open the owner platform at `http://localhost:5111` and a venue's public pag
 | `pnpm test` | Vitest across all packages |
 | `pnpm --filter mizrahitality-owner test` | Run one package's tests (swap the filter; append `-- <pattern>` for a single test) |
 | `pnpm format` / `pnpm format:check` | Prettier write / check |
-| `pnpm db:push` | Apply the Prisma schema to SQLite (no migration history) |
-| `pnpm db:migrate` | Create/apply a migration (no-op while the schema is empty) |
+| `pnpm db:migrate` | Create/apply a Prisma migration (`apps/owner/prisma/migrations/`) |
+| `pnpm db:push` | Push the schema to SQLite without a migration (legacy — prefer `db:migrate`) |
 | `pnpm db:studio` | Open Prisma Studio against the owner DB |
 | `pnpm seed` | Run `scripts/seed.mjs` |
 

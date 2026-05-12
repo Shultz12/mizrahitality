@@ -1,7 +1,7 @@
 // Fail-fast environment access for mizrahitality-owner. `env` throws at module load if a
-// required variable is missing. In the foundation skeleton only `lib/prisma.ts` imports this,
-// and nothing renders the Prisma client yet — so `next build` doesn't evaluate it, but
-// `pnpm dev` / `pnpm db:push` do (copy `.env.example` → `.env` first).
+// required variable is missing — so `pnpm dev`, `pnpm build` (it imports the route modules,
+// which reach `lib/auth.ts` → here), `pnpm db:push` and `pnpm test` all need a populated `.env`
+// (or `test.env`). Copy `.env.example` → `.env` first; `next build` reads it automatically.
 
 function required(name: string): string {
   const value = process.env[name];
@@ -14,8 +14,8 @@ function required(name: string): string {
 export const env = {
   /** SQLite connection string for Prisma. */
   DATABASE_URL: required('DATABASE_URL'),
+  /** Secret used to HMAC session tokens before storing them (`lib/auth.ts`). */
+  SESSION_SECRET: required('SESSION_SECRET'),
   // TODO(feature #4 ai-copy-and-variants): make this `required('ANTHROPIC_API_KEY')`.
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ?? '',
-  // TODO(feature #2 owner-auth): make this `required('SESSION_SECRET')`.
-  SESSION_SECRET: process.env.SESSION_SECRET ?? '',
 } as const;

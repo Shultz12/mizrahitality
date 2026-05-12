@@ -26,7 +26,7 @@ NOTES.md             # build order, settled decisions, open questions
 README.md            # what it is, how to run it, the REST API contract
 ```
 
-> Scaffolded. The monorepo foundation (feature #1, `plans/01-monorepo-foundation-plan.md`) has landed: pnpm workspace (Node 22, Corepack, `.npmrc` `node-linker=hoisted`), `@mizrahitality/contracts`, both Next.js (App Router, Tailwind v4) app skeletons, shadcn/ui in `apps/owner`, Prisma + SQLite scaffold with an **empty schema**, ESLint flat config / Prettier / per-package Vitest, and the root scripts. Real models, auth, and API endpoints arrive with later features (#2 onward).
+> Foundation (feature #1, `plans/01-monorepo-foundation-plan.md`) + owner-auth (feature #2, `plans/02-owner-auth-plan.md`) have landed: pnpm workspace (Node 22, Corepack, `.npmrc` `node-linker=hoisted`), `@mizrahitality/contracts`, both Next.js (App Router, Tailwind v4) app skeletons, shadcn/ui in `apps/owner`, ESLint flat config / Prettier / per-package Vitest, the root scripts; plus the first Prisma models (`Owner` / `Venue` / `Session`) with a real migration history, email+password sign-up / sign-in / sign-out over `httpOnly` cookie sessions (`bcryptjs`, HMAC-of-token storage), `lib/auth.ts` helpers, and route-group-based guarding. The REST API, the venue builder, the AI publish steps, and the dashboard arrive with later features (#3 onward).
 
 ## Tech stack
 
@@ -53,6 +53,7 @@ Real domains/DNS/SSL/hosting; real booking or payments ("Book Now" ends at a con
 
 - `VISION.md` / `PRD.md` are the source of truth for *what/why*; `NOTES.md` for build order, decisions, and open questions. Keep `NOTES.md` current as decisions get made.
 - Use the relevant skills when they apply (`update-database` for Prisma schema changes, `claude-api` for Claude/caching). No commit obligation unless the user asks.
+- **Owner-app routes:** `apps/owner/src/app/(auth)/*` (`sign-in`, `sign-up`) are public — the pages redirect to `/dashboard` if you're already authed; `apps/owner/src/app/(authed)/*` are guarded by `(authed)/layout.tsx` → `requireOwner()` (the security boundary; no middleware). Server-side auth lives in `lib/auth.ts` (`getCurrentOwner` / `requireOwner`) + `lib/auth-actions.ts` (the `signUp` / `signIn` / `signOut` Server Actions). `apps/owner/.env` needs `SESSION_SECRET` or the app won't boot (a dev value ships in `.env.example`).
 
 ## Build / run / test
 
@@ -63,7 +64,7 @@ Real domains/DNS/SSL/hosting; real booking or payments ("Book Now" ends at a con
 - `pnpm build` / `pnpm typecheck` / `pnpm lint` — across all packages (`pnpm -r …`).
 - `pnpm test` — Vitest across all packages. One package: `pnpm --filter mizrahitality-owner test`; one test: `pnpm --filter mizrahitality-owner test -- <pattern>`.
 - `pnpm format` / `pnpm format:check` — Prettier write / check.
-- `pnpm db:push` / `pnpm db:migrate` / `pnpm db:studio` — delegate to `apps/owner` (Prisma + SQLite). Schema changes go through the `update-database` skill; changelog: `apps/owner/prisma/CHANGELOG.md`.
+- `pnpm db:migrate` / `pnpm db:studio` / `pnpm db:push` — delegate to `apps/owner` (Prisma + SQLite). There's a real migration history as of feature #2 (`apps/owner/prisma/migrations/` — `db:migrate` is no longer a no-op); use `db:migrate`, not `db:push`. Schema changes go through the `update-database` skill; changelog: `apps/owner/prisma/CHANGELOG.md`.
 - `pnpm seed` — runs `scripts/seed.mjs` (no-op stub until feature #9).
 
-Copy `apps/owner/.env.example` → `apps/owner/.env` and `apps/customer/.env.example` → `apps/customer/.env` before `pnpm dev` / `pnpm db:push` (`apps/owner` needs `DATABASE_URL`). ESLint is centralized in the root flat config (`no-explicit-any` is an error); `next build` skips its own lint pass (`eslint.ignoreDuringBuilds`).
+Copy `apps/owner/.env.example` → `apps/owner/.env` and `apps/customer/.env.example` → `apps/customer/.env` before `pnpm dev` / `pnpm build` / `pnpm db:migrate` — `apps/owner` needs `DATABASE_URL` **and** `SESSION_SECRET` (both throw at module load if missing; `.env.example` ships a throwaway dev `SESSION_SECRET`). ESLint is centralized in the root flat config (`no-explicit-any` is an error); `next build` skips its own lint pass (`eslint.ignoreDuringBuilds`).

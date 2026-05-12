@@ -21,6 +21,9 @@ apps/owner/prisma/dev.db
 apps/owner/prisma/dev.db-journal
 apps/owner/dev.db
 apps/owner/dev.db-journal
+# Throwaway DB the Vitest globalSetup provisions for the auth integration tests
+apps/owner/prisma/vitest-tmp.db
+apps/owner/prisma/vitest-tmp.db-journal
 
 # OS / editor
 .DS_Store

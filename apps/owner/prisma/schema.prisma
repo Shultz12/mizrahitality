@@ -1,8 +1,7 @@
 // Mizrahitality — owner database schema.
 //
-// Empty for the monorepo-foundation step. The first models — Owner, Venue (1—1, created in
-// the builder), Session — land in feature #2 (owner-auth). Schema changes go through the
-// `update-database` skill; see prisma/CHANGELOG.md.
+// Owner / Venue (1—1, content fields added by the builder in #3) / Session land in feature #2
+// (owner-auth). Schema changes go through the `update-database` skill; see prisma/CHANGELOG.md.
 
 generator client {
   provider = "prisma-client-js"
@@ -11,4 +10,41 @@ generator client {
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
+}
+
+model Owner {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions Session[]
+  venue    Venue?
+
+  @@map("owners")
+}
+
+model Venue {
+  id        String   @id @default(cuid())
+  ownerId   String   @unique
+  owner     Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Content fields (name, slug, description, image) land in feature #3 (site-builder).
+  @@map("venues")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  ownerId   String
+  owner     Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([ownerId])
+  @@index([expiresAt])
+  @@map("sessions")
 }

@@ -7,3 +7,4 @@ pnpm-lock.yaml
 **/*.tsbuildinfo
 *.md
 apps/owner/prisma/dev.db
+plans/site-design/code.html

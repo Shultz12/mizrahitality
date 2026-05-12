@@ -12,7 +12,7 @@ export default async function AuthedLayout({ children }: { children: ReactNode }
   return (
     <div className="min-h-dvh">
       <header className="border-b">
-        <div className="mx-auto flex max-w-3xl items-center gap-2 px-6 py-3">
+        <div className="mx-auto flex max-w-5xl items-center gap-2 px-6 py-3">
           <Link href="/dashboard" className="font-semibold tracking-tight">
             Mizrahitality
           </Link>
@@ -31,7 +31,7 @@ export default async function AuthedLayout({ children }: { children: ReactNode }
           </form>
         </div>
       </header>
-      <div className="mx-auto max-w-3xl px-6 py-10">{children}</div>
+      <div className="mx-auto max-w-5xl px-6 py-10">{children}</div>
     </div>
   );
 }

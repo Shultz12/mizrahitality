@@ -1,6 +1,6 @@
 // Fail-fast environment access for mizrahitality-customer. `env` throws at module load if a
-// required variable is missing. Nothing imports this module in the foundation skeleton —
-// feature #8 (customer-site) wires it into the SSR page → owner-API call.
+// required variable is missing. Consumed (since feature #8, customer-site) by the SSR venue page
+// (`app/[slug]/page.tsx` → `GET …/page`) and the `trackEventAction` Server Action (→ `POST …/events`).
 
 function required(name: string): string {
   const value = process.env[name];

@@ -1,1 +1,27 @@
 .worktrees/
+
+# Dependencies
+node_modules/
+
+# Next.js
+**/.next/
+**/out/
+
+# Build output
+**/dist/
+*.tsbuildinfo
+
+# Environment (keep .env.example committed)
+.env
+.env.local
+.env.*.local
+
+# Prisma / SQLite
+apps/owner/prisma/dev.db
+apps/owner/prisma/dev.db-journal
+apps/owner/dev.db
+apps/owner/dev.db-journal
+
+# OS / editor
+.DS_Store
+Thumbs.db

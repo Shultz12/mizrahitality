@@ -1,0 +1,32 @@
+{
+  "name": "mizrahitality",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "preinstall": "npx -y only-allow pnpm",
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:push": "pnpm --filter mizrahitality-owner db:push",
+    "db:migrate": "pnpm --filter mizrahitality-owner db:migrate",
+    "db:studio": "pnpm --filter mizrahitality-owner db:studio",
+    "seed": "node scripts/seed.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@next/eslint-plugin-next": "^15.1.6",
+    "eslint": "^9.18.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.21.0",
+    "vitest": "^3.0.0"
+  }
+}

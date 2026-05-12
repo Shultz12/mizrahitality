@@ -1,0 +1,14 @@
+// Mizrahitality — owner database schema.
+//
+// Empty for the monorepo-foundation step. The first models — Owner, Venue (1—1, created in
+// the builder), Session — land in feature #2 (owner-auth). Schema changes go through the
+// `update-database` skill; see prisma/CHANGELOG.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}

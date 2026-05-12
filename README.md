@@ -1,15 +1,15 @@
 # Mizrahitality
 
-A monorepo with two cooperating products for non-technical hospitality venue owners. A venue owner signs up, writes a rough description of their place and uploads one photo — and that's the whole input. The platform polishes the copy with AI, authors it into pre-designed per-audience templates (one page = a Rich Text slot + an Image slot), publishes a server-rendered page, and hands back an analytics dashboard. A separate SSR visitor site renders that page per visitor type by calling the platform's REST API.
+A monorepo with two cooperating products for non-technical hospitality venue owners. A venue owner signs up (email + password), then in the builder gives a venue name, a rough free-text description, and one image — uploaded, or chosen from a small supplied stock set — and that's the whole input. The platform polishes the description text with AI, authors it into pre-designed per-audience templates (one page = a Rich Text slot + an Image slot), publishes a server-rendered page, and hands back an analytics dashboard. One venue per owner. A separate SSR visitor site renders that page per visitor type by calling the platform's REST API.
 
 It's a job-interview deliverable; product rationale (and a bit of levity) lives in [`VISION.md`](VISION.md) and [`PRD.md`](PRD.md). Build notes / order / open questions are in [`NOTES.md`](NOTES.md). Engineering orientation is in [`CLAUDE.md`](CLAUDE.md).
 
 ## The two products
 
-- **`mizrahitality-owner`** (`apps/owner`) — Next.js (App Router), SSR builder platform. Owns the Prisma + SQLite database and exposes the REST API. Port **5111**.
-- **`mizrahitality-customer`** (`apps/customer`) — Next.js (App Router), SSR public visitor site at `/<venue-slug>`. On every request it calls the owner API for the page matching the current visitor type, renders it, and posts back analytics events. Authenticated by a per-venue API key. Port **5112**.
+- **`mizrahitality-owner`** (`apps/owner`) — Next.js (App Router), SSR builder platform. Owns the Prisma + SQLite database and exposes the REST API. One venue per owner. Port **5111**.
+- **`mizrahitality-customer`** (`apps/customer`) — Next.js (App Router), SSR public visitor site at `/<venue-slug>`. On every request it calls the owner API for the page matching the current visitor type, renders it, and posts back analytics events. The visitor type stays server-side — never in the URL or the page UI. Port **5112**.
 
-They share **`@mizrahitality/contracts`** (`packages/contracts`) — TypeScript types + plain constants, zero runtime deps — and otherwise talk **only** over the owner app's REST API: no shared DB handle, no cross-app imports.
+They share **`@mizrahitality/contracts`** (`packages/contracts`) — TypeScript types + plain constants, zero runtime deps — and otherwise talk **only** over the owner app's REST API (open — localhost-only demo, no keys): no shared DB handle, no cross-app imports.
 
 ## Layout
 
@@ -17,12 +17,12 @@ They share **`@mizrahitality/contracts`** (`packages/contracts`) — TypeScript 
 apps/owner/          # mizrahitality-owner — SSR builder, REST API, owns Prisma + SQLite; port 5111
 apps/customer/       # mizrahitality-customer — SSR visitor site at /<slug>; port 5112
 packages/contracts/  # @mizrahitality/contracts — shared TS types + constants; zero runtime deps
-scripts/seed.mjs     # demo seed — Venue #1 with history, Venue #2 empty
+scripts/seed.mjs     # demo seed — Owner #1 with a published venue + history, Owner #2 empty
 VISION.md, PRD.md    # product docs — the what and why
 NOTES.md             # build order, decisions, open questions
 ```
 
-> Status: not yet scaffolded on `main`. The workspace skeleton + `@mizrahitality/contracts` exist on branch `feature/monorepo-foundation` (`.worktrees/monorepo-foundation`); the app skeletons aren't done. See `NOTES.md` → "Open / pending". Update this section once the foundation lands on `main`.
+> Status: scaffolded. The monorepo foundation (feature #1) has landed — pnpm workspace, `@mizrahitality/contracts`, both Next.js (App Router, Tailwind v4) app skeletons, shadcn/ui in `apps/owner`, Prisma + SQLite scaffold (empty schema), ESLint flat config / Prettier / Vitest, and the root scripts below. Real accounts, the builder, the REST API, and the dashboard arrive with later features (`NOTES.md` → "Build order").
 
 ## Prerequisites
 
@@ -52,7 +52,7 @@ Then open the owner platform at `http://localhost:5111` and a venue's public pag
 | `pnpm lint` | ESLint across the workspace (`no-explicit-any` is an error) |
 | `pnpm typecheck` | `tsc --noEmit` across the workspace |
 | `pnpm test` | Vitest across all packages |
-| `pnpm test --filter mizrahitality-owner` | Run one package's tests (swap the filter; append `-- <pattern>` for a single test) |
+| `pnpm --filter mizrahitality-owner test` | Run one package's tests (swap the filter; append `-- <pattern>` for a single test) |
 | `pnpm format` / `pnpm format:check` | Prettier write / check |
 | `pnpm db:push` | Apply the Prisma schema to SQLite (no migration history) |
 | `pnpm db:migrate` | Create/apply a migration (no-op while the schema is empty) |
@@ -63,16 +63,15 @@ Schema changes go through the `update-database` skill; the changelog is `apps/ow
 
 ## REST API contract
 
-The owner app exposes the API; `mizrahitality-customer` is its only consumer. Every request carries the venue's API key.
+The owner app exposes the API; `mizrahitality-customer` is its only consumer. The API is **open** — no authentication, no keys — because everything runs on localhost for the demo. Unknown slug → `404`.
 
-- **Auth:** `x-venue-api-key: <key>` header, scoped to one venue. Missing/invalid key → `401`/`403`. Unknown slug → `404`.
-- **Get a rendered page** — `GET /api/venues/<slug>/page?type=<visitor-type>` → the fully-composed page payload (the Rich Text slot's authored content + the Image slot's photo URL + template styling) for that variant. Unknown/absent `type` → the `neutral` variant. Pages are precomputed at publish; no AI call in this path.
+- **Get a rendered page** — `GET /api/venues/<slug>/page?type=<visitor-type>` → the fully-composed page payload (the Rich Text slot's authored content + the Image slot's image URL + template styling) for that variant. Unknown/absent `type` → the `neutral` variant. `type` is supplied by the customer app server-side — it never appears in a browser URL. Pages are precomputed at publish; no AI call in this path.
 - **Report an event** — `POST /api/venues/<slug>/events` with `{ "type": "visit" | "book-now-hover" | "book-now-click", "visitorType": "<visitor-type>" }` → records the event against that venue.
 
-**Visitor type** = gender (`male` / `female`) × age group (`18-30` / `31-50` / `50+`) → 6, plus `neutral` = **7 variants per published venue**. The enum and the API key header constant live in `@mizrahitality/contracts`.
+**Visitor type** = gender (`male` / `female`) × age group (`18-30` / `31-50` / `50+`) → 6, plus `neutral` = **7 variants per published venue**. The enum lives in `@mizrahitality/contracts`.
 
 > Endpoint paths/shapes here are the intended contract; this section gets pinned to the implementation when `analytics-api` lands.
 
 ## Out of scope
 
-Real domains/DNS/SSL/hosting (the "domain" is a URL-path slug; everything is localhost); real booking or payments ("Book Now" ends at a confirmation modal); multi-page sites, free-form layout, drag-and-drop, a rich-text editor, image-placement controls; AI-generated styling or templates (those are supplied design assets — the AI only authors copy into slots); teams/roles; email verification or password reset; real visitor identification (it's simulated via the demo tab); analytics beyond the specified dashboard.
+Real domains/DNS/SSL/hosting (the "domain" is a URL-path slug; everything is localhost); real booking or payments ("Book Now" ends at a confirmation modal); multiple venues per account / venue selector (one page per owner); API authentication or keys (the API is open — localhost-only demo); multi-page sites, free-form layout, drag-and-drop, a rich-text editor, image-placement controls; AI-generated styling or templates or AI image editing (templates/styling are supplied design assets; the AI only authors the description text into the Rich Text slot); teams/roles; email verification or password reset; real visitor identification (it's simulated via the demo tab); analytics beyond the specified dashboard.

@@ -22,7 +22,7 @@ VISION.md, PRD.md    # product docs — the what and why
 NOTES.md             # build order, decisions, open questions
 ```
 
-> Status: in progress. Landed so far — the monorepo foundation (feature #1: pnpm workspace, `@mizrahitality/contracts`, both Next.js App-Router/Tailwind-v4 app skeletons, shadcn/ui in `apps/owner`, ESLint flat config / Prettier / Vitest, the root scripts below), owner authentication (feature #2: `Owner` / `Venue` / `Session` Prisma models with a migration history, email + password sign-up / sign-in / sign-out over `httpOnly` cookie sessions), the venue builder (feature #3: name → derived slug, free-text description, one image uploaded **or** picked from 3 supplied stock images; a saved-content preview; an authed dashboard + nav; a `Publish` stub that flips `publishState` and freezes the slug), AI copy + variants (feature #4: "Enhance with AI" polishes the description text, and Publish generates the 7 audience-tailored copy bundles — one per visitor type — validates them, and stores them as `PageVariant` rows, all-or-nothing with retries; a read-only "Generated pages" list with per-audience regenerate), and the SSR published page (feature #5: the owner can view their server-rendered venue page — the 5-zone "Warm Minimalist" design — at `/preview`, with `?type=<visitor-type>` to preview each audience). The REST API, the dashboard, and the customer site arrive with later features (`NOTES.md` → "Build order").
+> Status: in progress. Landed so far — the monorepo foundation (feature #1: pnpm workspace, `@mizrahitality/contracts`, both Next.js App-Router/Tailwind-v4 app skeletons, shadcn/ui in `apps/owner`, ESLint flat config / Prettier / Vitest, the root scripts below), owner authentication (feature #2: `Owner` / `Venue` / `Session` Prisma models with a migration history, email + password sign-up / sign-in / sign-out over `httpOnly` cookie sessions), the venue builder (feature #3: name → derived slug, free-text description, one image uploaded **or** picked from 3 supplied stock images; a saved-content preview; an authed dashboard + nav; a `Publish` stub that flips `publishState` and freezes the slug), AI copy + variants (feature #4: "Enhance with AI" polishes the description text, and Publish generates the 7 audience-tailored copy bundles — one per visitor type — validates them, and stores them as `PageVariant` rows, all-or-nothing with retries; a read-only "Generated pages" list with per-audience regenerate), the SSR published page (feature #5: the owner can view their server-rendered venue page — the 5-zone "Warm Minimalist" design — at `/preview`, with `?type=<visitor-type>` to preview each audience), and the open REST/JSON API (feature #6: `GET /api/venues/<slug>/page?type=<visitor-type>` returns the precomputed page payload; `POST /api/venues/<slug>/events` records `visit` / `book-now-hover` / `book-now-click` events; an `Event` model; no auth — see the contract below). The dashboard and the customer site arrive with later features (`NOTES.md` → "Build order").
 
 ## Prerequisites
 
@@ -65,14 +65,25 @@ Schema changes go through the `update-database` skill; the changelog is `apps/ow
 
 ## REST API contract
 
-The owner app exposes the API; `mizrahitality-customer` is its only consumer. The API is **open** — no authentication, no keys — because everything runs on localhost for the demo. Unknown slug → `404`.
+The owner app exposes the API; `mizrahitality-customer` is its only consumer. The API is **open** — no authentication, no keys, no tokens — because everything runs on localhost for the demo. Failures return a JSON `ApiError` body — `{ "error": "<code>", "message": "<human-readable text>" }` — with the matching status code (`bad_request` → 400, `not_found` → 404). Wrong HTTP method on a route → `405`. Types + the visitor-type enum live in `@mizrahitality/contracts`.
 
-- **Get a rendered page** — `GET /api/venues/<slug>/page?type=<visitor-type>` → the fully-composed page payload (the Rich Text slot's authored content + the Image slot's image URL + template styling) for that variant. Unknown/absent `type` → the `neutral` variant. `type` is supplied by the customer app server-side — it never appears in a browser URL. Pages are precomputed at publish; no AI call in this path.
-- **Report an event** — `POST /api/venues/<slug>/events` with `{ "type": "visit" | "book-now-hover" | "book-now-click", "visitorType": "<visitor-type>" }` → records the event against that venue.
+### `GET /api/venues/<slug>/page?type=<visitor-type>`
 
-**Visitor type** = gender (`male` / `female`) × age group (`18-30` / `31-50` / `50+`) → 6, plus `neutral` = **7 variants per published venue**. The enum lives in `@mizrahitality/contracts`.
+Returns `200` with the precomputed **rendered-page payload** for that variant (`RenderedPage`): the audience copy bundle + the absolute hero `imageUrl` + the per-variant body typography + the fixed UI strings (`"Book Now"`, `"Powered by Mizrahitality"`). Response header `Cache-Control: no-store` (the customer site re-fetches per request to pick up the cookie-selected visitor type).
 
-> Endpoint paths/shapes here are the intended contract; this section gets pinned to the implementation when `analytics-api` lands.
+- Unknown/absent/unrecognised `type` → the `neutral` variant. `type` is supplied by the customer app **server-side** — it never appears in a browser URL; the `50+` age groups travel URL-encoded (`?type=male-50%2B`).
+- Unknown slug, or a venue that hasn't been published → `404 not_found`.
+- Pages are precomputed at publish (feature #4) — **no AI call in this path**.
+
+### `POST /api/venues/<slug>/events`
+
+Body — JSON: `{ "type": "visit" | "book-now-hover" | "book-now-click", "visitorType": "<visitor-type>", "sessionId"?: "<opaque string>" }`. Returns `201` with `{ "ok": true }`; records one event row against that venue.
+
+- `sessionId` is **optional** — an opaque per-browser-session correlator the customer site mints (it powers the dashboard's hover→click funnel %); omit it and it's stored as `null`. The route never 400s on a missing one.
+- A non-object / non-JSON body, or a bad/missing `type` or `visitorType` → `400 bad_request`.
+- Unknown slug → `404 not_found`. (Recording is **not** gated on publish state — any existing venue accepts events.)
+
+**Visitor type** = gender (`male` / `female`) × age group (`18-30` / `31-50` / `50+`) → 6, plus `neutral` = **7 variants per published venue**.
 
 ## Out of scope
 

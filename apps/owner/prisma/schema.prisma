@@ -3,7 +3,9 @@
 // Owner / Venue (1—1) / Session land in feature #2 (owner-auth). Feature #3 (site-builder) adds
 // the Venue content columns (name, slug, description, image) + a publish-flow skeleton
 // (publishState / publishedAt / slugLockedAt) and the (still-empty) PageVariant table —
-// `PageVariant.content` is `Json`, shape TBD by feature #4 (ai-copy-and-variants).
+// `PageVariant.content` is `Json`, shape TBD by feature #4 (ai-copy-and-variants). Feature #6
+// (analytics-api) adds the Event table — the customer site posts visit / book-now-hover /
+// book-now-click events here over the open REST API; the dashboard (#7) reads them.
 // Schema changes go through the `update-database` skill; see prisma/CHANGELOG.md.
 
 generator client {
@@ -49,6 +51,7 @@ model Venue {
   updatedAt DateTime @updatedAt
 
   variants PageVariant[]
+  events   Event[]
 
   @@map("venues")
 }
@@ -65,6 +68,19 @@ model PageVariant {
   @@unique([venueId, visitorType])
   @@index([venueId])
   @@map("page_variants")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  venueId     String
+  venue       Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  type        String // one of ANALYTICS_EVENT_TYPES ('visit' | 'book-now-hover' | 'book-now-click')
+  visitorType String // one of the 7 VisitorType values (incl. 'neutral')
+  sessionId   String? // opaque per-browser-session correlator the customer site (#8) mints; nullable — direct API/seed callers may omit it; powers #7's hover→click funnel %
+  createdAt   DateTime @default(now())
+
+  @@index([venueId])
+  @@map("events")
 }
 
 model Session {

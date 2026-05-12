@@ -3,6 +3,36 @@
 Schema changes, newest first. Maintained per the `update-database` skill. The owner app is
 the sole owner of this database; the customer app never touches it.
 
+## 12-05-2026 — `add-event-model` (feature #6 analytics-api)
+
+Migration: `migrations/20260512194312_add_event_model/`. The third migration. A plain
+`CREATE TABLE "events" (...)` + `CREATE INDEX` — non-destructive, no SQLite table-redefine
+(unlike #3's `venues` rebuild).
+
+- Added model `Event` — `id` (cuid), `venueId` + `venue` relation (`onDelete: Cascade`), `type`
+  (one of `ANALYTICS_EVENT_TYPES` — `'visit' | 'book-now-hover' | 'book-now-click'`; plain string,
+  SQLite has no enums; the enum lives in `@mizrahitality/contracts`), `visitorType` (one of the 7
+  `VisitorType` values, incl. `'neutral'`), `sessionId` (`String?`), `createdAt`. `@@index([venueId])`,
+  `@@map("events")`. Added relation `events Event[]` to `model Venue`.
+- The customer site (feature #8) POSTs events here via `POST /api/venues/<slug>/events` over the
+  open REST API (feature #6); the **read-only consumer** is the analytics dashboard (feature #7),
+  which aggregates a venue's events in memory / a single `groupBy`.
+
+### Notes
+
+- `sessionId` is **nullable** on purpose — the customer site mints an opaque per-browser-session
+  correlator and sends it on every event (it powers #7's "clickers who hovered ≥ once ÷ all
+  clickers" funnel %), but the API DTO field is optional and the POST route is lenient: it stores
+  `null` when absent and never 400s on a missing one (keeps `curl`/seed usage and the README's
+  `{ type, visitorType }` body valid — a clean superset).
+- **Single `@@index([venueId])`** — demo-scale data; #7 aggregates a venue's events in memory.
+  Composite indexes (`[venueId, type]`, `[venueId, createdAt]`) are premature; #7 can add one later
+  if a query ever needs it.
+- **No `updatedAt`** — events are immutable; they're recorded once and never modified (the other
+  models carry `updatedAt`, but events genuinely never update).
+- Non-destructive (`CREATE TABLE` + index only); no data backfill. Cascade-deletes with the venue
+  (and thus the owner).
+
 ## 12-05-2026 — `add-venue-content-and-page-variant` (feature #3 site-builder)
 
 Migration: `migrations/20260512102303_add_venue_content_and_page_variant/`. The second migration.

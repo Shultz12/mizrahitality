@@ -1,12 +1,12 @@
-// lib/ai — the Anthropic client seam + the two publish-time text steps. Server-only.
+// lib/ai — the Gemini client seam + the two publish-time text steps. Server-only.
 
 export {
   COPY_MODEL,
-  __resetAnthropicForTests,
-  getAnthropic,
+  __resetGenAiForTests,
+  getGenAi,
   isAiConfigured,
-  type MessagesClient,
-} from './anthropic';
+  type GenAiClient,
+} from './gemini';
 export {
   AiCallError,
   AiNotConfiguredError,

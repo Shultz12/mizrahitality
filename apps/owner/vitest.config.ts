@@ -8,12 +8,12 @@ const TEST_DATABASE_URL = 'file:./vitest-tmp.db';
 const TEST_SESSION_SECRET = 'mizrahitality-test-session-secret';
 
 // Make these visible to globalSetup (main process) and the `prisma db push` subprocess too,
-// not just the worker processes that pick them up from `test.env`. ANTHROPIC_API_KEY is forced
+// not just the worker processes that pick them up from `test.env`. GOOGLE_API_KEY is forced
 // empty so `isAiConfigured()` is deterministically false in tests regardless of the shell — the
 // AI-step tests inject a fake client (the gate is bypassed) or assert the not-configured path.
 process.env.DATABASE_URL = TEST_DATABASE_URL;
 process.env.SESSION_SECRET = TEST_SESSION_SECRET;
-process.env.ANTHROPIC_API_KEY = '';
+process.env.GOOGLE_API_KEY = '';
 
 export default defineConfig({
   resolve: {
@@ -25,7 +25,7 @@ export default defineConfig({
     env: {
       DATABASE_URL: TEST_DATABASE_URL,
       SESSION_SECRET: TEST_SESSION_SECRET,
-      ANTHROPIC_API_KEY: '',
+      GOOGLE_API_KEY: '',
     },
     globalSetup: ['./vitest.global-setup.ts'],
     // The integration tests share one throwaway SQLite file and clean up with unscoped

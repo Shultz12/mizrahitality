@@ -46,7 +46,7 @@ Built feature by feature; all nine features have landed (plans in [`plans/`](pla
 
 - **Node 22 LTS** (see [`.nvmrc`](.nvmrc))
 - **pnpm** via Corepack: `corepack enable && corepack install`
-- **`ANTHROPIC_API_KEY`** (in `apps/owner/.env`) — **optional**. Not needed to install, build, test, run, or `pnpm seed` (the seed's variant copy is canned JSON). It's needed only to use "Enhance with AI" and to Publish (which generates the 7 audience-tailored pages); without it those two features show a "not configured" hint and everything else works.
+- **`GOOGLE_API_KEY`** (in `apps/owner/.env`) — **optional**. A Google AI Studio key (https://aistudio.google.com → "Get API key"). Not needed to install, build, test, run, or `pnpm seed` (the seed's variant copy is canned JSON). It's needed only to use "Enhance with AI" and to Publish (which generates the 7 audience-tailored pages); without it those two features show a "not configured" hint and everything else works.
 
 ## Quickstart
 
@@ -61,7 +61,7 @@ pnpm seed                                        # populate the demo data — tw
 pnpm dev                                         # run both apps in parallel — owner :5111, customer :5112
 ```
 
-That's the whole setup — no manual builder/publish step and no `ANTHROPIC_API_KEY` needed. Now open:
+That's the whole setup — no manual builder/publish step and no `GOOGLE_API_KEY` needed. Now open:
 
 - the owner platform — **http://localhost:5111** (sign in with a [demo account](#demo-accounts))
 - a venue's public page — **http://localhost:5112/hotelmizrahi**
@@ -83,7 +83,7 @@ Visit either customer page — click "Book Now", or cycle the "Preview as…" ta
 ### The owner platform (`:5111`)
 
 - **Sign up / sign in** with an email and password (`/sign-up`, `/sign-in`).
-- **Builder** (`/builder`) — set the venue name (English letters + spaces; the slug is derived from it: lowercased, spaces removed), a free-text description, and one image (upload a JPEG/PNG/WebP ≤ 5 MB, or pick one of the 3 stock images). "Enhance with AI" rewrites the description text (needs `ANTHROPIC_API_KEY`). **Publish** generates the 7 audience-tailored pages, validates them, and freezes the slug.
+- **Builder** (`/builder`) — set the venue name (English letters + spaces; the slug is derived from it: lowercased, spaces removed), a free-text description, and one image (upload a JPEG/PNG/WebP ≤ 5 MB, or pick one of the 3 stock images). "Enhance with AI" rewrites the description text (needs `GOOGLE_API_KEY`). **Publish** generates the 7 audience-tailored pages, validates them, and freezes the slug.
 - **Published page** (`/preview`) — your server-rendered venue page; `?type=<visitor-type>` previews each of the 7 audiences.
 - **Dashboard** (`/dashboard`) — the analytics for your venue (see feature 7 above). An owner with no venue, or a venue with no events, sees a calm zeroed state, never an error.
 
@@ -112,7 +112,7 @@ Uploaded venue images are written to `apps/owner/uploads/` (gitignored, created 
 | `pnpm db:migrate` | Create/apply a Prisma migration (`apps/owner/prisma/migrations/`) |
 | `pnpm db:studio` | Open Prisma Studio against the owner DB |
 | `pnpm db:push` | Push the schema to SQLite without a migration (legacy — prefer `db:migrate`) |
-| `pnpm seed` | Run `scripts/seed.mjs` — (re)create the two demo accounts; resets the demo data on every run; needs only `DATABASE_URL` (run `pnpm db:migrate` first), no `ANTHROPIC_API_KEY` |
+| `pnpm seed` | Run `scripts/seed.mjs` — (re)create the two demo accounts; resets the demo data on every run; needs only `DATABASE_URL` (run `pnpm db:migrate` first), no `GOOGLE_API_KEY` |
 
 Schema changes go through the `update-database` skill; the changelog is [`apps/owner/prisma/CHANGELOG.md`](apps/owner/prisma/CHANGELOG.md).
 
@@ -121,7 +121,7 @@ Schema changes go through the `update-database` skill; the changelog is [`apps/o
 - **TypeScript**, strict, repo-wide (`no-explicit-any` is a lint error).
 - **Next.js** (App Router) for both apps — SSR is mandatory for the published owner page and the entire customer site.
 - **Prisma + SQLite** (file-based), owned **solely** by `apps/owner`; the customer app never touches the DB.
-- **Anthropic Claude** (Sonnet 4.6) with prompt caching — used only at publish time, only on the description **text**, never on the image, never in the page-serving request path.
+- **Google Gemini** (`gemini-2.5-flash-lite` via `@google/genai`) — used only at publish time, only on the description **text**, never on the image, never in the page-serving request path. Per-variant copy uses Gemini's structured output (`responseMimeType: 'application/json'` + `responseSchema`).
 - **TailwindCSS v4** + **shadcn/ui** (Base UI–based) for the owner app chrome; shadcn's Recharts-based Chart for the dashboard charts. The supplied per-audience customer templates are plain Tailwind/React.
 - **pnpm** workspaces (Node 22, Corepack; `.npmrc` `node-linker=hoisted`); **ESLint** (flat config) + **Prettier**; **Vitest** (`environment: 'node'`).
 

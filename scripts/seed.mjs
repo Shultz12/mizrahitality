@@ -14,7 +14,7 @@
 // never touches any other owner. The reviewer signs in normally — no Session rows are seeded.
 //
 // Variant copy is committed canned JSON under scripts/seed-data/ — so this script needs NO
-// ANTHROPIC_API_KEY, is offline, and is deterministic (the analytics use a fixed-seed PRNG).
+// GOOGLE_API_KEY, is offline, and is deterministic (the analytics use a fixed-seed PRNG).
 // The only env it reads is DATABASE_URL from apps/owner/.env (run `cp apps/owner/.env.example
 // apps/owner/.env` and `pnpm db:migrate` first). It resolves @prisma/client and bcryptjs from
 // the workspace's hoisted node_modules (.npmrc `node-linker=hoisted`).

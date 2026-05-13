@@ -9,7 +9,7 @@ import hotelMizrahi from '../../../../scripts/seed-data/hotel-mizrahi.json';
 import theLevantHouse from '../../../../scripts/seed-data/the-levant-house.json';
 
 // `scripts/seed.mjs` (feature #9 demo-seed) ships canned, committed `CopyBundle` JSON — one file
-// per demo venue, keyed by the 7 `VisitorType` strings — so the seed needs no ANTHROPIC_API_KEY.
+// per demo venue, keyed by the 7 `VisitorType` strings — so the seed needs no GOOGLE_API_KEY.
 // This pure (DB-less) test is the drift guard: every canned bundle must still validate, carry the
 // right `variant`, and wrap cleanly into the `PageVariant.content` blob `parsePageVariantContent`
 // expects, and each file must cover exactly the 7 visitor variants.

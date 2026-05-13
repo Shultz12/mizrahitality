@@ -3,24 +3,32 @@ import { allVisitorVariants, type VisitorType } from '@mizrahitality/contracts';
 import {
   AiCallError,
   AiNotConfiguredError,
-  __resetAnthropicForTests,
+  __resetGenAiForTests,
   enhanceDescription,
   generateAllVariants,
   generateVariantCopy,
-  type MessagesClient,
+  type GenAiClient,
 } from '@/lib/ai';
 
-// Exercises the AI steps against a faked `MessagesClient` — no DB, no network. The fake reads the
-// 2nd `system` block (the persona block) to echo back the right `variant`.
+// Exercises the AI steps against a faked `GenAiClient` — no DB, no network. The fake reads the
+// 2nd `systemInstruction.parts` entry (the persona block) to echo back the right `variant`.
 
-type FakeCreateParams = {
-  system?: string | Array<{ type: string; text: string }>;
-  messages: Array<{ role: string; content: string }>;
+type FakePart = { text: string };
+type FakeSystemInstruction = string | { parts: FakePart[] };
+type FakeGenerateContentParams = {
+  model: string;
+  contents: string;
+  config?: {
+    systemInstruction?: FakeSystemInstruction;
+    maxOutputTokens?: number;
+    responseMimeType?: string;
+    responseSchema?: unknown;
+  };
 };
-type FakeResp = { content: Array<{ type: string; text: string }> };
+type FakeResp = { text: string };
 
 function textResp(text: string): FakeResp {
-  return { content: [{ type: 'text', text }] };
+  return { text };
 }
 
 function validBundleFor(variant: VisitorType) {
@@ -41,9 +49,13 @@ function validBundleFor(variant: VisitorType) {
   };
 }
 
-function personaVariant(params: FakeCreateParams): VisitorType | null {
-  const block = Array.isArray(params.system) ? params.system[1] : undefined;
-  const match = (block?.text ?? '').match(/<!-- variant: (.+?) -->/);
+function personaVariant(params: FakeGenerateContentParams): VisitorType | null {
+  const instruction = params.config?.systemInstruction;
+  const personaText =
+    instruction && typeof instruction === 'object' && Array.isArray(instruction.parts)
+      ? (instruction.parts[1]?.text ?? '')
+      : '';
+  const match = personaText.match(/<!-- variant: (.+?) -->/);
   const found = match?.[1];
   return found && allVisitorVariants().includes(found as VisitorType)
     ? (found as VisitorType)
@@ -52,20 +64,20 @@ function personaVariant(params: FakeCreateParams): VisitorType | null {
 
 /** A fake that always returns a valid bundle for whatever variant the persona block names. */
 function fakeClient(
-  handler?: (params: FakeCreateParams, callIndex: number) => FakeResp,
-): MessagesClient {
+  handler?: (params: FakeGenerateContentParams, callIndex: number) => FakeResp,
+): GenAiClient {
   let calls = 0;
-  const create = vi.fn(async (params: FakeCreateParams): Promise<FakeResp> => {
+  const generateContent = vi.fn(async (params: FakeGenerateContentParams): Promise<FakeResp> => {
     const index = calls++;
     if (handler) return handler(params, index);
     const variant = personaVariant(params) ?? 'neutral';
     return textResp(JSON.stringify(validBundleFor(variant)));
   });
-  return { messages: { create } } as unknown as MessagesClient;
+  return { models: { generateContent } } as unknown as GenAiClient;
 }
 
 afterEach(() => {
-  __resetAnthropicForTests();
+  __resetGenAiForTests();
   vi.restoreAllMocks();
 });
 
@@ -81,8 +93,8 @@ describe('enhanceDescription', () => {
   });
 
   it('throws AiNotConfiguredError when no key and no client', async () => {
-    delete process.env.ANTHROPIC_API_KEY;
-    __resetAnthropicForTests();
+    delete process.env.GOOGLE_API_KEY;
+    __resetGenAiForTests();
     await expect(enhanceDescription('rough text')).rejects.toBeInstanceOf(AiNotConfiguredError);
   });
 });
@@ -100,9 +112,7 @@ describe('generateVariantCopy', () => {
   it('retries after a bad reply and includes the prior errors in the retry turn', async () => {
     const userContents: string[] = [];
     const client = fakeClient((params, index) => {
-      userContents.push(
-        typeof params.messages[0]?.content === 'string' ? params.messages[0]!.content : '',
-      );
+      userContents.push(typeof params.contents === 'string' ? params.contents : '');
       if (index === 0) return textResp('this is not json at all');
       const variant = personaVariant(params) ?? 'neutral';
       return textResp(JSON.stringify(validBundleFor(variant)));
@@ -117,20 +127,20 @@ describe('generateVariantCopy', () => {
   });
 
   it('gives up after 1 + retries attempts when every reply is garbage', async () => {
-    const create = vi.fn(async (): Promise<FakeResp> => textResp('still not json'));
-    const client = { messages: { create } } as unknown as MessagesClient;
+    const generateContent = vi.fn(async (): Promise<FakeResp> => textResp('still not json'));
+    const client = { models: { generateContent } } as unknown as GenAiClient;
     const result = await generateVariantCopy(
       { venueName: 'Blue Lagoon', description: 'A cosy spot.', variant: 'neutral' },
       { client, retries: 1 },
     );
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.errors.length).toBeGreaterThan(0);
-    expect(create).toHaveBeenCalledTimes(2);
+    expect(generateContent).toHaveBeenCalledTimes(2);
   });
 
   it('throws AiNotConfiguredError when no key and no client', async () => {
-    delete process.env.ANTHROPIC_API_KEY;
-    __resetAnthropicForTests();
+    delete process.env.GOOGLE_API_KEY;
+    __resetGenAiForTests();
     await expect(
       generateVariantCopy({ venueName: 'X', description: 'Y', variant: 'neutral' }),
     ).rejects.toBeInstanceOf(AiNotConfiguredError);
@@ -156,8 +166,8 @@ describe('generateAllVariants', () => {
   });
 
   it('throws AiNotConfiguredError when no key and no client', async () => {
-    delete process.env.ANTHROPIC_API_KEY;
-    __resetAnthropicForTests();
+    delete process.env.GOOGLE_API_KEY;
+    __resetGenAiForTests();
     await expect(generateAllVariants({ venueName: 'X', description: 'Y' })).rejects.toBeInstanceOf(
       AiNotConfiguredError,
     );

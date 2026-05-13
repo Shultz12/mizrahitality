@@ -1,21 +1,22 @@
-// The two text-only Claude steps + the all-7 orchestrator. Server-only — only ever reached from
-// Server Actions / Server Components. Both steps take an optional `client?: MessagesClient` (default
-// `getAnthropic()`) — that's the mock seam: tests inject a fake `{ messages: { create: vi.fn() } }`.
+// The two text-only Gemini steps + the all-7 orchestrator. Server-only — only ever reached from
+// Server Actions / Server Components. Both steps take an optional `client?: GenAiClient` (default
+// `getGenAi()`) — that's the mock seam: tests inject a fake `{ models: { generateContent: vi.fn() } }`.
 //
 //   enhanceDescription   — polishes the owner's free-text description (text the owner reviews).
 //   generateVariantCopy  — one persona variant: BASE_COPY_PROMPT + that persona block + the venue
-//                          name/description → a JSON copy bundle, parsed + structurally validated
-//                          deterministically (no second LLM call to route text), with ~2 retries
-//                          on (JSON parse failure | `variant` mismatch | validation failure).
-//   generateAllVariants  — the 7 variants, sequentially in allVisitorVariants() order so the
-//                          BASE_COPY_PROMPT ephemeral-cache prefix stays warm across the batch.
-//                          Always returns length-7; the caller (lib/publish.ts) is all-or-nothing.
+//                          name/description → a JSON copy bundle. Gemini's structured-output config
+//                          (`responseMimeType: 'application/json'` + `responseSchema`) makes
+//                          JSON-shape failures effectively impossible — the SDK enforces shape.
+//                          Content-level validation (`validateCopyBundle`: word counts, sentence
+//                          counts, char limits — things JSON schema can't express) still runs, with
+//                          ~2 retries on (validation failure | `variant` mismatch).
+//   generateAllVariants  — the 7 variants, sequentially in allVisitorVariants() order. Always
+//                          returns length-7; the caller (lib/publish.ts) is all-or-nothing.
 //
-// Prompt-caching: only the BASE_COPY_PROMPT system block is `cache_control: { type: 'ephemeral' }`
-// — it's identical across all 7 calls and well over the 1024-token minimum; the persona block and
-// the venue data are small and left uncached (tagging them would just churn cache entries).
+// Model: `gemini-2.5-flash-lite` (free-tier-friendly). No prompt caching — the implicit-cache
+// threshold (~2,048 tokens) is higher than the BASE_COPY_PROMPT prefix (~600 tokens), and explicit
+// caching has storage cost + a 60-minute TTL — not worth it for 8 calls per publish.
 
-import type Anthropic from '@anthropic-ai/sdk';
 import {
   allVisitorVariants,
   parseCopyBundle,
@@ -23,9 +24,10 @@ import {
   type VisitorType,
 } from '@mizrahitality/contracts';
 import { BASE_COPY_PROMPT, ENHANCE_DESCRIPTION_PROMPT, templateEntry } from '@/lib/templates';
-import { COPY_MODEL, getAnthropic, type MessagesClient } from './anthropic';
+import { COPY_MODEL, getGenAi, type GenAiClient } from './gemini';
+import { COPY_BUNDLE_RESPONSE_SCHEMA } from './response-schema';
 
-/** Thrown when no `ANTHROPIC_API_KEY` is configured and no test client was injected. */
+/** Thrown when no `GOOGLE_API_KEY` is configured and no test client was injected. */
 export class AiNotConfiguredError extends Error {
   constructor(message = 'AI is not configured') {
     super(message);
@@ -45,15 +47,6 @@ const ENHANCE_MAX_TOKENS = 1024;
 const COPY_MAX_TOKENS = 1500; // a full bundle is well under ~1200 tokens
 const DEFAULT_RETRIES = 2; // 1 + 2 = 3 tries total per variant
 
-/** Concatenate the text of every `type:'text'` content block of a non-streaming Messages reply. */
-function extractText(resp: Anthropic.Message): string {
-  let out = '';
-  for (const block of resp.content) {
-    if (block.type === 'text') out += block.text;
-  }
-  return out.trim();
-}
-
 function wrapCallError(err: unknown): AiCallError {
   return new AiCallError(
     `AI request failed: ${err instanceof Error ? err.message : 'unknown error'}`,
@@ -64,19 +57,19 @@ function wrapCallError(err: unknown): AiCallError {
  * Polish the owner's free-text description (text only — never the image). One non-streaming call;
  * no validation beyond non-empty (the owner reviews the result and accepts or keeps their own).
  */
-export async function enhanceDescription(text: string, client?: MessagesClient): Promise<string> {
-  const c = client ?? getAnthropic();
+export async function enhanceDescription(text: string, client?: GenAiClient): Promise<string> {
+  const c = client ?? getGenAi();
   if (!c) throw new AiNotConfiguredError();
   try {
-    const resp = await c.messages.create({
+    const resp = await c.models.generateContent({
       model: COPY_MODEL,
-      max_tokens: ENHANCE_MAX_TOKENS,
-      system: [
-        { type: 'text', text: ENHANCE_DESCRIPTION_PROMPT, cache_control: { type: 'ephemeral' } },
-      ],
-      messages: [{ role: 'user', content: text }],
+      contents: text,
+      config: {
+        systemInstruction: ENHANCE_DESCRIPTION_PROMPT,
+        maxOutputTokens: ENHANCE_MAX_TOKENS,
+      },
     });
-    const out = extractText(resp);
+    const out = (resp.text ?? '').trim();
     if (out.length === 0) throw new AiCallError('AI returned an empty rewrite');
     return out;
   } catch (err) {
@@ -93,9 +86,9 @@ export async function enhanceDescription(text: string, client?: MessagesClient):
  */
 export async function generateVariantCopy(
   args: { venueName: string; description: string; variant: VisitorType },
-  opts?: { client?: MessagesClient; retries?: number },
+  opts?: { client?: GenAiClient; retries?: number },
 ): Promise<CopyBundleResult> {
-  const c = opts?.client ?? getAnthropic();
+  const c = opts?.client ?? getGenAi();
   if (!c) throw new AiNotConfiguredError();
 
   const entry = templateEntry(args.variant);
@@ -111,16 +104,19 @@ export async function generateVariantCopy(
 
     let result: CopyBundleResult;
     try {
-      const resp = await c.messages.create({
+      const resp = await c.models.generateContent({
         model: COPY_MODEL,
-        max_tokens: COPY_MAX_TOKENS,
-        system: [
-          { type: 'text', text: BASE_COPY_PROMPT, cache_control: { type: 'ephemeral' } },
-          { type: 'text', text: entry.personaBlock },
-        ],
-        messages: [{ role: 'user', content }],
+        contents: content,
+        config: {
+          systemInstruction: {
+            parts: [{ text: BASE_COPY_PROMPT }, { text: entry.personaBlock }],
+          },
+          maxOutputTokens: COPY_MAX_TOKENS,
+          responseMimeType: 'application/json',
+          responseSchema: COPY_BUNDLE_RESPONSE_SCHEMA,
+        },
       });
-      result = parseCopyBundle(extractText(resp));
+      result = parseCopyBundle(resp.text ?? '');
     } catch (err) {
       throw wrapCallError(err);
     }
@@ -144,12 +140,12 @@ export async function generateVariantCopy(
 export async function generateAllVariants(
   args: { venueName: string; description: string },
   opts?: {
-    client?: MessagesClient;
+    client?: GenAiClient;
     retries?: number;
     onProgress?: (done: number, total: number, variant: VisitorType) => void;
   },
 ): Promise<{ variant: VisitorType; result: CopyBundleResult }[]> {
-  const c = opts?.client ?? getAnthropic();
+  const c = opts?.client ?? getGenAi();
   if (!c) throw new AiNotConfiguredError();
 
   const variants = allVisitorVariants();

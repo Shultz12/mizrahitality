@@ -9,7 +9,7 @@ import {
 import { prisma } from '@/lib/prisma';
 import { runPublishPipeline } from '@/lib/publish';
 import type { OwnerWithVenue } from '@/lib/auth';
-import type { MessagesClient } from '@/lib/ai';
+import type { GenAiClient } from '@/lib/ai';
 import { GET } from '@/app/api/venues/[slug]/page/route';
 import { POST } from '@/app/api/venues/[slug]/events/route';
 
@@ -21,8 +21,11 @@ import { POST } from '@/app/api/venues/[slug]/events/route';
 
 const ORIGIN = 'http://localhost:5111';
 
-type FakeCreateParams = { system?: string | Array<{ type: string; text: string }> };
-type FakeResp = { content: Array<{ type: string; text: string }> };
+type FakePart = { text: string };
+type FakeGenerateContentParams = {
+  config?: { systemInstruction?: string | { parts: FakePart[] } };
+};
+type FakeResp = { text: string };
 
 function validBundleFor(variant: VisitorType) {
   return {
@@ -42,22 +45,26 @@ function validBundleFor(variant: VisitorType) {
   };
 }
 
-function personaVariant(params: FakeCreateParams): VisitorType {
-  const block = Array.isArray(params.system) ? params.system[1] : undefined;
-  const match = (block?.text ?? '').match(/<!-- variant: (.+?) -->/);
+function personaVariant(params: FakeGenerateContentParams): VisitorType {
+  const instruction = params.config?.systemInstruction;
+  const personaText =
+    instruction && typeof instruction === 'object' && Array.isArray(instruction.parts)
+      ? (instruction.parts[1]?.text ?? '')
+      : '';
+  const match = personaText.match(/<!-- variant: (.+?) -->/);
   const found = match?.[1];
   return found && allVisitorVariants().includes(found as VisitorType)
     ? (found as VisitorType)
     : 'neutral';
 }
 
-function fakeClient(): MessagesClient {
-  const create = vi.fn(
-    async (params: FakeCreateParams): Promise<FakeResp> => ({
-      content: [{ type: 'text', text: JSON.stringify(validBundleFor(personaVariant(params))) }],
+function fakeClient(): GenAiClient {
+  const generateContent = vi.fn(
+    async (params: FakeGenerateContentParams): Promise<FakeResp> => ({
+      text: JSON.stringify(validBundleFor(personaVariant(params))),
     }),
   );
-  return { messages: { create } } as unknown as MessagesClient;
+  return { models: { generateContent } } as unknown as GenAiClient;
 }
 
 let ownerCounter = 0;

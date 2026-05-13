@@ -15,8 +15,8 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.95.2",
     "@base-ui/react": "^1.4.1",
+    "@google/genai": "^2.2.0",
     "@mizrahitality/contracts": "workspace:*",
     "@prisma/client": "^6.0.0",
     "bcryptjs": "^3.0.3",

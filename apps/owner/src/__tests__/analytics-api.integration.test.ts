@@ -90,7 +90,12 @@ async function createOwnerWithVenue(): Promise<OwnerWithVenue> {
 /** A published venue with its 7 stored variants — returns its slug. */
 async function publishedVenue(): Promise<string> {
   const owner = await createOwnerWithVenue();
-  const result = await runPublishPipeline(owner, { client: fakeClient() });
+  // The seeded venue has no `enhancedDescription`; pass `allowWithoutEnhanced: true` so the
+  // pipeline uses the typed description as-is (post-#9 separate Enhance step).
+  const result = await runPublishPipeline(owner, {
+    client: fakeClient(),
+    allowWithoutEnhanced: true,
+  });
   expect(result).toEqual({ ok: true });
   return owner.venue!.slug;
 }

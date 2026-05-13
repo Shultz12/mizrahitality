@@ -20,8 +20,33 @@ export default async function BuilderPage() {
   const venue = owner.venue
     ? await prisma.venue.findUnique({ where: { id: owner.venue.id }, include: { variants: true } })
     : null;
+
+  // Auto-heal a venue stuck in `'publishing'` from a crashed pipeline. The pipeline normally
+  // reverts publishState in its catch block, but a dev-server reload or `ECONNRESET` during a
+  // back-off can kill it mid-flight, leaving the in-flight marker on disk. If the venue still
+  // has all 7 variant rows AND a `publishedAt`, it was published successfully before the crashed
+  // run — the live data hasn't actually changed (the all-or-nothing transaction guarantees it),
+  // so flip it back to `'published'` so the Generated-pages list shows its Visit live + Regenerate
+  // buttons again.
+  if (
+    venue &&
+    venue.publishState === 'publishing' &&
+    venue.publishedAt &&
+    venue.variants.length === 7
+  ) {
+    await prisma.venue.update({
+      where: { id: venue.id },
+      data: { publishState: 'published' },
+    });
+    venue.publishState = 'published';
+  }
+
   const aiConfigured = isAiConfigured();
-  const published = venue?.publishState === 'published';
+  // Derive `published` from the actual data driving the UI (7 stored variants + a publishedAt
+  // timestamp) rather than the publishState column alone — that way the per-variant Visit live +
+  // Regenerate buttons survive any transient state-machine hiccup even if the auto-heal above
+  // somehow misses a case.
+  const published = !!venue && venue.publishedAt !== null && venue.variants.length === 7;
   const customerSiteUrl = venue
     ? `${env.CUSTOMER_BASE_URL}/${encodeURIComponent(venue.slug)}`
     : null;
@@ -33,6 +58,8 @@ export default async function BuilderPage() {
       published={published}
       hasDescription={!!venue && venue.description.trim().length > 0}
       isNewVenue={!venue}
+      initialDescription={venue?.description ?? ''}
+      initialEnhancedDescription={venue?.enhancedDescription ?? null}
     >
       <div className="space-y-6">
         <div className="space-y-1">
@@ -43,7 +70,20 @@ export default async function BuilderPage() {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-2">
-          <BuilderForm venue={venue} aiConfigured={aiConfigured} />
+          <BuilderForm
+            venue={
+              venue
+                ? {
+                    name: venue.name,
+                    slug: venue.slug,
+                    imageKind: venue.imageKind,
+                    imageValue: venue.imageValue,
+                    slugLockedAt: venue.slugLockedAt,
+                  }
+                : null
+            }
+            aiConfigured={aiConfigured}
+          />
           <VenuePreview venue={venue} />
         </div>
 

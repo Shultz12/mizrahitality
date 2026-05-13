@@ -26,8 +26,15 @@ import { validateVenueDescription, validateVenueName } from './validation';
 import { deriveSlugBase, nextAvailableSlug } from './slug';
 import { isStockImageId } from './stock-images';
 import { UploadValidationError, deleteUploadByKey, saveVenueUpload } from './uploads';
-import { generateVariantCopy, isAiConfigured } from './ai';
+import { enhanceDescription, generateVariantCopy, isAiConfigured } from './ai';
 import { runPublishPipeline, type PublishState } from './publish';
+import {
+  completePublishJob,
+  createPublishJob,
+  getPublishJob,
+  setPublishJobProgress,
+  type PublishJobStatus,
+} from './publish-jobs';
 
 export type BuilderState = {
   /** Top-level error (rare — unexpected failure). */
@@ -211,9 +218,15 @@ export async function saveVenueAction(
     imageUpdate = { imageKind: 'stock', imageValue: rawStockImageId };
   }
 
+  // If the typed description actually changed, clear the polished version: the read-only
+  // "polished" box empties and the next Publish/Regenerate will prompt the enhance-missing modal
+  // (predictable behaviour — never silently use a stale polished version of a different text).
+  const enhancedUpdate =
+    description !== venue.description ? { enhancedDescription: null } : {};
+
   await prisma.venue.update({
     where: { id: venue.id },
-    data: { name, slug, description, ...(imageUpdate ?? {}) },
+    data: { name, slug, description, ...enhancedUpdate, ...(imageUpdate ?? {}) },
   });
 
   // If we replaced an uploaded file, best-effort delete the old one.
@@ -225,34 +238,153 @@ export async function saveVenueAction(
 }
 
 // ---------------------------------------------------------------------------
-// Feature #4 — the AI surface: publish (generate the 7 variants), enhance, regenerate.
+// Feature #4 — the AI surface: enhance (separate step, post-#9), publish (generate the 7
+// variants), regenerate.
 // ---------------------------------------------------------------------------
 
 /**
- * Publish — a stateful `useActionState` action. Delegates to the publish pipeline (lib/publish.ts):
- * generates + validates all 7 audience copy bundles and commits transactionally, or changes nothing
- * and reports which variants failed. No `redirect()` — `<PublishSection>` shows the result inline
- * and `router.refresh()`es; `revalidatePath('/dashboard')` updates the dashboard's `Status:` line.
+ * Polish the description the owner has currently typed into the form and store both that text
+ * (as `venue.description`) and the polished version (as `venue.enhancedDescription`). Idempotent
+ * — re-clicking regenerates against whatever is in the form right now. Takes the typed text from
+ * the client because the form's textarea state doesn't reach the server otherwise — reading
+ * `venue.description` from the DB here would always use the last *saved* text, not what the owner
+ * sees in the textarea. Save is implicit: clicking Enhance commits the description without
+ * touching name/slug/image.
  */
-export async function publishAction(
-  _prev: PublishState,
-  _formData: FormData,
-): Promise<PublishState> {
-  const state = await runPublishPipeline(await requireOwner());
-  if (state.ok) revalidatePath('/dashboard');
-  return state;
+export type EnhanceResult =
+  | { ok: true; enhancedDescription: string }
+  | { ok: false; error: string };
+
+export async function enhanceDescriptionAction(typedDescription: string): Promise<EnhanceResult> {
+  const owner = await requireOwner();
+  if (!owner.venue) return { ok: false, error: 'Create your venue first.' };
+  const venue = owner.venue;
+  if (!isAiConfigured())
+    return { ok: false, error: 'AI is not configured — set GOOGLE_API_KEY to enhance.' };
+
+  const validated = validateVenueDescription(typedDescription);
+  if (!validated.ok) return { ok: false, error: validated.message };
+  const description = validated.value;
+  if (description.trim().length === 0) {
+    return { ok: false, error: 'Write a description first, then click Enhance.' };
+  }
+
+  let polished: string;
+  try {
+    polished = await enhanceDescription(description);
+  } catch {
+    return { ok: false, error: 'The AI service is unavailable right now — please try again.' };
+  }
+
+  await prisma.venue.update({
+    where: { id: venue.id },
+    data: { description, enhancedDescription: polished },
+  });
+  revalidatePath('/builder');
+  return { ok: true, enhancedDescription: polished };
+}
+
+/**
+ * Publish — async, in-memory-job-backed. The client calls `startPublishAction()` to kick off the
+ * pipeline, then polls `pollPublishJobAction(jobId)` to render an in-button "X / 7" progress bar
+ * while it runs. The pipeline commits transactionally / all-or-nothing.
+ *
+ * Pre-flight: if `venue.enhancedDescription` is null/empty AND the caller didn't pass
+ * `allowWithoutEnhanced: true`, this returns `{ ok: false, needsEnhanceConfirm: true }` instead of
+ * starting a job — the UI swaps the normal confirm modal for the "enhance-missing" mode; on
+ * confirm, the client re-invokes with `{ allowWithoutEnhanced: true }` and the pipeline uses the
+ * typed description as-is (without ever overwriting it).
+ */
+export type StartPublishResult =
+  | { ok: true; jobId: string; total: number }
+  | { ok: false; error: string }
+  | { ok: false; needsEnhanceConfirm: true };
+
+export async function startPublishAction(
+  opts?: { allowWithoutEnhanced?: boolean },
+): Promise<StartPublishResult> {
+  const owner = await requireOwner();
+  if (!owner.venue) return { ok: false, error: 'Create your venue before publishing.' };
+  if (!isAiConfigured())
+    return { ok: false, error: 'AI is not configured — set GOOGLE_API_KEY to publish.' };
+  if (owner.venue.description.trim().length === 0) {
+    return { ok: false, error: 'Write a venue description before publishing.' };
+  }
+  if (
+    !owner.venue.enhancedDescription?.trim() &&
+    !opts?.allowWithoutEnhanced
+  ) {
+    return { ok: false, needsEnhanceConfirm: true };
+  }
+
+  // Eagerly snapshot a job so the client gets a non-null id even before the pipeline's first
+  // `onProgress` tick. Total mirrors `allVisitorVariants().length` (7).
+  const job = createPublishJob(owner.id, 7);
+
+  // Kick the pipeline off in the background. Errors here are swallowed into the job result —
+  // never thrown to the action caller (which has already returned the jobId).
+  void runPublishPipeline(owner, {
+    allowWithoutEnhanced: opts?.allowWithoutEnhanced,
+    onProgress: (done) => setPublishJobProgress(job.id, done),
+  })
+    .then((state) => {
+      completePublishJob(job.id, state);
+      if (state.ok) revalidatePath('/dashboard');
+    })
+    .catch((err) => {
+      completePublishJob(job.id, {
+        error:
+          err instanceof Error
+            ? `Publish failed unexpectedly: ${err.message}`
+            : 'Publish failed unexpectedly.',
+      });
+    });
+
+  return { ok: true, jobId: job.id, total: job.total };
+}
+
+export type PollPublishResult =
+  | {
+      ok: true;
+      status: PublishJobStatus;
+      done: number;
+      total: number;
+      result?: PublishState;
+    }
+  | { ok: false; error: string };
+
+export async function pollPublishJobAction(jobId: string): Promise<PollPublishResult> {
+  const owner = await requireOwner();
+  const job = getPublishJob(jobId, owner.id);
+  if (!job) return { ok: false, error: 'Unknown publish job — please try again.' };
+  return {
+    ok: true,
+    status: job.status,
+    done: job.done,
+    total: job.total,
+    result: job.result,
+  };
 }
 
 /**
  * Regenerate one published audience page — called directly from `<RegenerateButton>`. Re-runs the
  * variant copy step, re-validates, and swaps just that `PageVariant` row. Only operates on a
- * published venue (full Re-publish handles the unpublished / all-7 case). After a successful
- * publish `venue.description` already holds the polished text, so the regenerated variant stays
- * consistent in voice with the other 6.
+ * published venue (full Re-publish handles the unpublished / all-7 case).
+ *
+ * Source-text selection mirrors `runPublishPipeline`: prefer `venue.enhancedDescription` if
+ * present; otherwise — only with `allowWithoutEnhanced` — fall back to the typed description.
+ * Without that flag and an empty `enhancedDescription`, returns `{ ok: false,
+ * needsEnhanceConfirm: true }` so the button can prompt the same confirm modal as Re-publish.
  */
+export type RegenerateResult =
+  | { ok: true }
+  | { ok: false; error: string; errors?: string[] }
+  | { ok: false; needsEnhanceConfirm: true };
+
 export async function regenerateVariantAction(
   visitorType: string,
-): Promise<{ ok: true } | { ok: false; error: string; errors?: string[] }> {
+  opts?: { allowWithoutEnhanced?: boolean },
+): Promise<RegenerateResult> {
   const owner = await requireOwner();
   if (!owner.venue) return { ok: false, error: 'Create your venue first.' };
   const venue = owner.venue;
@@ -263,11 +395,17 @@ export async function regenerateVariantAction(
   if (!isAiConfigured())
     return { ok: false, error: 'AI is not configured — set GOOGLE_API_KEY.' };
 
+  const enhanced = venue.enhancedDescription?.trim() ?? '';
+  if (enhanced.length === 0 && !opts?.allowWithoutEnhanced) {
+    return { ok: false, needsEnhanceConfirm: true };
+  }
+  const sourceText = enhanced.length > 0 ? enhanced : venue.description;
+
   let result: CopyBundleResult;
   try {
     result = await generateVariantCopy({
       venueName: venue.name,
-      description: venue.description,
+      description: sourceText,
       variant: visitorType,
     });
   } catch {

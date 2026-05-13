@@ -7,7 +7,7 @@
 // `miz_visitor_type` cookie and re-renders SSR for that variant; subsequent analytics events are
 // tagged with it.
 
-import { allVisitorVariants, type VisitorType } from '@mizrahitality/contracts';
+import { NEUTRAL_VISITOR_TYPE, allVisitorVariants, type VisitorType } from '@mizrahitality/contracts';
 import { cn } from '@/lib/utils';
 import { selectVisitorTypeAction } from '@/lib/visitor-type-actions';
 
@@ -66,7 +66,9 @@ export function DemoTab({ current }: { current: VisitorType }) {
         >
           Preview as…
         </p>
-        {allVisitorVariants().map((v) => (
+        {/* Reviewer-facing order: Neutral first (it's also the implicit default), then the six
+            typed variants in `allVisitorVariants()` order. */}
+        {[NEUTRAL_VISITOR_TYPE, ...allVisitorVariants().filter((v) => v !== NEUTRAL_VISITOR_TYPE)].map((v) => (
           <VariantButton key={v} value={v} label={variantLabel(v)} selected={v === current} />
         ))}
         <p className="px-1 pt-2 text-[11px] leading-[1.4] text-[#2C2824]/45">

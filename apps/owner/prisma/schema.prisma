@@ -38,8 +38,9 @@ model Venue {
   // --- content (feature #3 site-builder) ---
   name        String // English letters + spaces; 1–60 chars (validated in app code)
   slug        String @unique // derived from name: lowercased, spaces removed, numeric suffix on collision
-  description String @default("") // free text; may be empty until the owner writes it
-  imageKind   String // 'stock' | 'upload'
+  description         String  @default("") // free text; may be empty until the owner writes it
+  enhancedDescription String? // null until the owner clicks Enhance; cleared on description-edit
+  imageKind           String // 'stock' | 'upload'
   imageValue  String // stock: a stock-image id (e.g. 'atlantis-paradise'); upload: relative key 'venues/<venueId>/<file>'
 
   // --- publish-flow skeleton (#3 stub; #4 fills generation) ---

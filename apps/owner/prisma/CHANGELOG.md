@@ -3,6 +3,30 @@
 Schema changes, newest first. Maintained per the `update-database` skill. The owner app is
 the sole owner of this database; the customer app never touches it.
 
+## 13-05-2026 — `add-venue-enhanced-description` (post-#9 — separate Enhance step)
+
+Migration: `migrations/20260513203211_add_venue_enhanced_description/`. The fourth migration.
+A pure `ALTER TABLE "venues" ADD COLUMN "enhancedDescription" TEXT;` — non-destructive, no
+SQLite redefine, no backfill.
+
+- Added column `enhancedDescription String?` to model `Venue` — null until the owner clicks
+  the new builder **Enhance** button, which stores the AI-polished version of the typed
+  `description`. Cleared back to `null` by `saveVenueAction` whenever the typed description
+  actually changes (predictable: the read-only "polished" box empties and the next
+  Publish/Regenerate prompts the owner to confirm or click Enhance).
+
+### Notes
+
+- The implicit enhance-at-publish design from feature #4 was reverted: `runPublishPipeline`
+  no longer overwrites `venue.description` on a successful publish; the typed description
+  is now strictly the owner's text. The publish pipeline prefers `enhancedDescription` as
+  the source for variant generation; if it's null the action returns
+  `needsEnhanceConfirm: true` and the UI opens an "enhance-missing" confirm modal — the
+  owner can either cancel and click Enhance first, or confirm "Generate anyway" to publish
+  from the typed text directly.
+- Non-destructive: pure column add, no backfill — existing demo venues start with `null`.
+- The seed (`scripts/seed.mjs`) does not touch this column; seeded venues stay `null`.
+
 ## 12-05-2026 — `add-event-model` (feature #6 analytics-api)
 
 Migration: `migrations/20260512194312_add_event_model/`. The third migration. A plain

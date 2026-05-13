@@ -13,9 +13,10 @@
 //   generateAllVariants  — the 7 variants, sequentially in allVisitorVariants() order. Always
 //                          returns length-7; the caller (lib/publish.ts) is all-or-nothing.
 //
-// Model: `gemini-2.5-flash-lite` (free-tier-friendly). No prompt caching — the implicit-cache
-// threshold (~2,048 tokens) is higher than the BASE_COPY_PROMPT prefix (~600 tokens), and explicit
-// caching has storage cost + a 60-minute TTL — not worth it for 8 calls per publish.
+// Model: `gemini-3.1-flash-lite` — still supports structured output (`responseSchema` /
+// `responseMimeType: 'application/json'`) so JSON-shape failures stay impossible. Billing is
+// enabled on the key, so RPM/RPD ceilings no longer apply: there is no inter-call pacing and no
+// rate-limit back-off scaffolding — calls fire back-to-back.
 
 import {
   allVisitorVariants,
@@ -48,6 +49,9 @@ const COPY_MAX_TOKENS = 1500; // a full bundle is well under ~1200 tokens
 const DEFAULT_RETRIES = 2; // 1 + 2 = 3 tries total per variant
 
 function wrapCallError(err: unknown): AiCallError {
+  // Surface the real SDK failure in the server log — the action only returns a generic key-free
+  // message to the client, so without this every "AI service is unavailable" looks identical.
+  console.error('[ai/copy] Gemini call failed:', err);
   return new AiCallError(
     `AI request failed: ${err instanceof Error ? err.message : 'unknown error'}`,
   );
@@ -133,9 +137,8 @@ export async function generateVariantCopy(
 
 /**
  * Generate all 7 variants, sequentially in `allVisitorVariants()` order. Always returns length 7;
- * `runPublishPipeline` (lib/publish.ts) decides all-or-nothing. `onProgress` is wired for logs /
- * the seed — the Server-Action transport can't stream it mid-action, so the UI shows a generic
- * pending state.
+ * `runPublishPipeline` (lib/publish.ts) decides all-or-nothing. `onProgress` is consumed by the
+ * publish-job registry (lib/publish-jobs.ts) so the client can poll mid-flight progress.
  */
 export async function generateAllVariants(
   args: { venueName: string; description: string },
@@ -150,7 +153,8 @@ export async function generateAllVariants(
 
   const variants = allVisitorVariants();
   const out: { variant: VisitorType; result: CopyBundleResult }[] = [];
-  for (const variant of variants) {
+  for (let i = 0; i < variants.length; i++) {
+    const variant = variants[i]!;
     const result = await generateVariantCopy(
       { venueName: args.venueName, description: args.description, variant },
       { client: c, retries: opts?.retries },

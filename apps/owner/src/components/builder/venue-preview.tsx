@@ -1,16 +1,19 @@
-// A read-only preview of the venue's *saved* inputs (name, slug, description, chosen image).
-// Server Component — no interactivity; the builder form `router.refresh()`es after a save so this
-// re-renders with the new content. This is the plain "here's what you typed" preview; when the
-// owner Publishes, AI writes a tailored version of this copy for each audience, and the public page
-// (feature #5) renders the full design.
+'use client';
+
+// A read-only preview of the venue's saved chrome (name, slug, chosen image) with a *live*
+// description: while the owner is typing, the textarea text appears here in real time; after
+// they click Enhance, the polished version takes its place — both driven by `<BuilderShell>`'s
+// live `typedDescription` / `polishedPreview` state, not by saved props. Name/slug/image still
+// come from the saved venue prop because their changes flow through Save (a router refresh),
+// not through live input — the textarea is the only field that benefits from live preview.
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isStockImageId, stockImagePath } from '@/lib/stock-images';
+import { useBuilderShell } from './builder-shell';
 
 type PreviewVenue = {
   name: string;
   slug: string;
-  description: string;
   imageKind: string;
   imageValue: string;
 };
@@ -21,6 +24,9 @@ function imageSrc(kind: string, value: string): string {
 }
 
 export function VenuePreview({ venue }: { venue: PreviewVenue | null }) {
+  const { typedDescription, polishedPreview } = useBuilderShell();
+  const displayDescription = polishedPreview ?? typedDescription;
+
   return (
     <Card>
       <CardHeader>
@@ -41,8 +47,8 @@ export function VenuePreview({ venue }: { venue: PreviewVenue | null }) {
               alt={`${venue.name} photo`}
               className="w-full max-h-80 rounded-lg object-cover"
             />
-            {venue.description ? (
-              <p className="text-sm whitespace-pre-wrap">{venue.description}</p>
+            {displayDescription.trim().length > 0 ? (
+              <p className="text-sm whitespace-pre-wrap">{displayDescription}</p>
             ) : (
               <p className="text-sm text-muted-foreground italic">No description yet.</p>
             )}

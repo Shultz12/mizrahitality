@@ -48,7 +48,9 @@ Built feature by feature; all nine features have landed (plans in [`plans/`](pla
 - **pnpm** via Corepack: `corepack enable && corepack install`
 - **`ANTHROPIC_API_KEY`** (in `apps/owner/.env`) — **optional**. Not needed to install, build, test, run, or `pnpm seed` (the seed's variant copy is canned JSON). It's needed only to use "Enhance with AI" and to Publish (which generates the 7 audience-tailored pages); without it those two features show a "not configured" hint and everything else works.
 
-## Setup & run
+## Quickstart
+
+From a clean checkout (with the [prerequisites](#prerequisites) in place):
 
 ```bash
 pnpm install                                     # install workspace deps (runs `prisma generate` for apps/owner)
@@ -59,9 +61,11 @@ pnpm seed                                        # populate the demo data — tw
 pnpm dev                                         # run both apps in parallel — owner :5111, customer :5112
 ```
 
-Then open the owner platform at **http://localhost:5111** and a venue's public page at **http://localhost:5112/hotelmizrahi**. After publishing a venue, the owner can view its server-rendered page at **http://localhost:5111/preview** (append `?type=<visitor-type>` — e.g. `?type=female-18-30`, or `?type=male-50%2B` for the `50+` groups — to preview each audience).
+That's the whole setup — no manual builder/publish step and no `ANTHROPIC_API_KEY` needed. Now open:
 
-> Following these six steps top to bottom — with no manual builder/publish step and no `ANTHROPIC_API_KEY` — lands you on a fully working demo.
+- the owner platform — **http://localhost:5111** (sign in with a [demo account](#demo-accounts))
+- a venue's public page — **http://localhost:5112/hotelmizrahi**
+- the owner's server-rendered page — **http://localhost:5111/preview** (append `?type=<visitor-type>` — e.g. `?type=female-18-30`, or `?type=male-50%2B` for the `50+` groups — to preview each audience)
 
 ## Demo accounts
 

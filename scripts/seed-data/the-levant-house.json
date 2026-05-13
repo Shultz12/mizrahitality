@@ -1,0 +1,135 @@
+{
+  "male-18-30": {
+    "variant": "male-18-30",
+    "tagline": "A glass-and-light hotel on the water, with fast Wi-Fi, easy check-in, and the harbor right below your window.",
+    "heroTrustPrimer": "Booking takes under two minutes.",
+    "story": {
+      "hook": "You don't want a brochure, you want a place that works. The Levant House keeps it clean and simple.",
+      "detail": "It's a modern hotel right on the harbor, all glass and light, with rooms that look straight out over the water.",
+      "detailBullets": [
+        "High-speed Wi-Fi throughout the building",
+        "Quick check-in, no standing around",
+        "A heated infinity pool and a rooftop restaurant",
+        "Secure parking on site"
+      ],
+      "nudge": "Pick your dates and book it. No pressure, no hard sell."
+    },
+    "highlightStripLine": "Glass, light, and the harbor right outside your window.",
+    "closingHeading": "Book your dates",
+    "closingTrustLine": "Instant confirmation."
+  },
+  "male-31-50": {
+    "variant": "male-31-50",
+    "tagline": "A sleek harbor hotel where the logistics are handled, the rooms are quiet, and the view does the rest.",
+    "heroTrustPrimer": "Reserve in under two minutes.",
+    "story": {
+      "hook": "You're moving between work, family, and travel, and you don't have time to dig for details. The Levant House lays them out and handles the rest.",
+      "detail": "A modern waterfront hotel of glass and light, with quiet rooms overlooking the harbor and a calm, attentive team that keeps everything running so your stay is genuinely effortless.",
+      "detailBullets": [
+        "Secure on-site parking and 24-hour staff",
+        "Quiet, harbor-view rooms",
+        "A quiet spa and a rooftop restaurant",
+        "High-speed Wi-Fi in every room"
+      ],
+      "nudge": "Secure your reservation now and let the team take it from there."
+    },
+    "highlightStripLine": "Logistics handled, from secure parking to a team on call around the clock.",
+    "closingHeading": "Your room is ready",
+    "closingTrustLine": "Instant, confirmed reservation."
+  },
+  "male-50+": {
+    "variant": "male-50+",
+    "tagline": "A calm, well-kept hotel on the harbor, with quiet rooms, clear service, and an easy welcome at the door.",
+    "heroTrustPrimer": "Secure booking. We protect your privacy.",
+    "story": {
+      "hook": "You want comfort, quiet, and service you can rely on. The Levant House was built around exactly that.",
+      "detail": "The hotel sits right on the harbor. The rooms are quiet and well kept. A rooftop restaurant, a calm spa, and a heated pool are all easy to reach. The staff are nearby whenever you need them.",
+      "detailBullets": [
+        "Quiet, comfortable rooms with harbor views",
+        "A calm spa and a heated indoor pool",
+        "Lifts and level walkways throughout",
+        "Attentive staff on hand around the clock"
+      ],
+      "nudge": "Reserve your dates today. We will take good care of everything else."
+    },
+    "highlightStripLine": "Quiet rooms, a calm spa, and staff who look after every guest.",
+    "closingHeading": "Your room is waiting",
+    "closingTrustLine": "Secure, encrypted booking with instant confirmation."
+  },
+  "female-18-30": {
+    "variant": "female-18-30",
+    "tagline": "Floor-to-ceiling glass, a rooftop at golden hour, and the harbor shimmering below, the stay you will keep talking about.",
+    "heroTrustPrimer": "Reserving takes about two minutes.",
+    "story": {
+      "hook": "You want a place that looks the way the photos promise and feels even better once you're there. The Levant House is exactly that.",
+      "detail": "Think walls of glass, light pouring in, a rooftop restaurant made for golden hour, and a quiet spa for the slow mornings. Every room looks straight out over the harbor.",
+      "detailBullets": [
+        "Harbor views from floor-to-ceiling windows",
+        "A rooftop restaurant built for sunset",
+        "A heated infinity pool",
+        "A quiet spa for unhurried mornings"
+      ],
+      "nudge": "Lock in the dates that work and make this the trip everyone asks you about."
+    },
+    "highlightStripLine": "Walls of glass, a rooftop at sunset, and the harbor below.",
+    "closingHeading": "Your escape is waiting",
+    "closingTrustLine": "Instant confirmation, no fuss."
+  },
+  "female-31-50": {
+    "variant": "female-31-50",
+    "tagline": "A calm, immaculate harbor hotel where the details are handled and the only thing left is to breathe.",
+    "heroTrustPrimer": "Secure booking, confirmed instantly.",
+    "story": {
+      "hook": "You're the one who reads every review, weighs the options, and makes sure nothing slips. At The Levant House, that work is already done.",
+      "detail": "It's a modern waterfront hotel that's quiet, spotless, and easy to settle into, with harbor-view rooms and a calm team that answers questions before you have to ask. The practical things are sorted, so the days feel like yours.",
+      "detailBullets": [
+        "Clean, comfortable rooms with harbor views",
+        "A quiet spa and a heated indoor pool",
+        "A rooftop restaurant a lift ride away",
+        "Secure parking and 24-hour staff"
+      ],
+      "nudge": "Choose your dates and let the hotel take care of the rest, so the only thing on your list is rest."
+    },
+    "highlightStripLine": "Quiet, spotless, and sorted, so your only job is to unwind.",
+    "closingHeading": "Your retreat is ready",
+    "closingTrustLine": "Secure booking with instant confirmation."
+  },
+  "female-50+": {
+    "variant": "female-50+",
+    "tagline": "A bright, gracious harbor hotel where everything is spotless, the staff are kind, and the days feel calm.",
+    "heroTrustPrimer": "Simple, secure booking, and help is always close.",
+    "story": {
+      "hook": "You want somewhere calm and welcoming, where you feel looked after and completely at ease. The Levant House was made for exactly that.",
+      "detail": "The hotel sits right on the harbor, all glass and gentle light, with a calm spa, a heated indoor pool, and a rooftop restaurant. The rooms are immaculate and comfortable, the building is easy to move around, and the staff are warm and close at hand. It is the kind of place where you settle in quickly and the trip becomes a happy memory.",
+      "detailBullets": [
+        "Immaculate, comfortable rooms with harbor views",
+        "A calm spa and a heated indoor pool",
+        "Lifts and level walkways throughout",
+        "Warm staff nearby whenever you need them"
+      ],
+      "nudge": "Choose your dates and come settle in, and let the hotel look after the rest."
+    },
+    "highlightStripLine": "Bright, spotless, and gracious, the kind of place you come back to.",
+    "closingHeading": "Come settle in",
+    "closingTrustLine": "Secure booking, instant confirmation, and help whenever you need it."
+  },
+  "neutral": {
+    "variant": "neutral",
+    "tagline": "A modern harbor hotel of glass and light, with harbor-view rooms, a rooftop restaurant, and a calm, easy stay.",
+    "heroTrustPrimer": "Takes less than two minutes.",
+    "story": {
+      "hook": "The Levant House is a modern waterfront hotel built around comfort, calm, and an easy stay. From the moment you arrive, the details are handled for you.",
+      "detail": "It pairs walls of glass and natural light with rooms that look out over the harbor, plus a rooftop restaurant, a quiet spa, a heated pool, and secure parking on site.",
+      "detailBullets": [
+        "Rooms overlooking the harbor",
+        "A rooftop restaurant and a quiet spa",
+        "High-speed Wi-Fi throughout the hotel",
+        "Secure parking and 24-hour staff"
+      ],
+      "nudge": "Your dates are still open, so reserve them now and let the team take it from there."
+    },
+    "highlightStripLine": "Glass, light, harbor views, and a team on call around the clock.",
+    "closingHeading": "Your room is waiting",
+    "closingTrustLine": "Instant confirmation."
+  }
+}

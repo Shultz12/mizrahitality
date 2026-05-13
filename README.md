@@ -17,18 +17,19 @@ They share **`@mizrahitality/contracts`** (`packages/contracts`) — TypeScript 
 apps/owner/          # mizrahitality-owner — SSR builder, REST API, owns Prisma + SQLite; port 5111
 apps/customer/       # mizrahitality-customer — SSR visitor site at /<slug>; port 5112
 packages/contracts/  # @mizrahitality/contracts — shared TS types + constants; zero runtime deps
-scripts/seed.mjs     # demo seed — Owner #1 with a published venue + history, Owner #2 empty
+scripts/seed.mjs     # demo seed — Owner #1: published "Hotel Mizrahi" + ~30 days of analytics; Owner #2: published "The Levant House", empty
+scripts/seed-data/   # canned per-venue copy-bundle JSON the seed reads (so it needs no ANTHROPIC_API_KEY)
 VISION.md, PRD.md    # product docs — the what and why
 NOTES.md             # build order, decisions, open questions
 ```
 
-> Status: in progress. Landed so far — the monorepo foundation (feature #1: pnpm workspace, `@mizrahitality/contracts`, both Next.js App-Router/Tailwind-v4 app skeletons, shadcn/ui in `apps/owner`, ESLint flat config / Prettier / Vitest, the root scripts below), owner authentication (feature #2: `Owner` / `Venue` / `Session` Prisma models with a migration history, email + password sign-up / sign-in / sign-out over `httpOnly` cookie sessions), the venue builder (feature #3: name → derived slug, free-text description, one image uploaded **or** picked from 3 supplied stock images; a saved-content preview; an authed dashboard + nav; a `Publish` stub that flips `publishState` and freezes the slug), AI copy + variants (feature #4: "Enhance with AI" polishes the description text, and Publish generates the 7 audience-tailored copy bundles — one per visitor type — validates them, and stores them as `PageVariant` rows, all-or-nothing with retries; a read-only "Generated pages" list with per-audience regenerate), the SSR published page (feature #5: the owner can view their server-rendered venue page — the 5-zone "Warm Minimalist" design — at `/preview`, with `?type=<visitor-type>` to preview each audience), the open REST/JSON API (feature #6: `GET /api/venues/<slug>/page?type=<visitor-type>` returns the precomputed page payload; `POST /api/venues/<slug>/events` records `visit` / `book-now-hover` / `book-now-click` events; an `Event` model; no auth — see the contract below), and the analytics dashboard (feature #7: at `/dashboard` — total visits, "Book Now" hover/click counts, a daily-visitors bar chart with an OLS trendline, gender / age-group breakdowns, "Book Now" clicks by gender, click-through % and a hover→click funnel %, and a per-audience conversion table — all server-computed over the recorded events; an empty venue shows zeroed / "No data yet" states, never an error), and the SSR customer site (feature #8: the public visitor page at `:5112/<slug>` — on every request it fetches the rendered page from the owner API for the active visitor type and renders the 5-zone design server-side; a mid-left hover-out "Preview as…" tab cycles the previewed audience via an `httpOnly` cookie (never in the URL); "Book Now" records the click and shows a confirmation modal — no real booking; `visit` / `book-now-hover` / `book-now-click` events post back to the owner API; an unknown slug or an unreachable owner API shows a friendly page, never a stack trace). Next up: the demo seed (`NOTES.md` → "Build order").
+> Status: feature-complete (build chain #1–#9 landed). Landed so far — the monorepo foundation (feature #1: pnpm workspace, `@mizrahitality/contracts`, both Next.js App-Router/Tailwind-v4 app skeletons, shadcn/ui in `apps/owner`, ESLint flat config / Prettier / Vitest, the root scripts below), owner authentication (feature #2: `Owner` / `Venue` / `Session` Prisma models with a migration history, email + password sign-up / sign-in / sign-out over `httpOnly` cookie sessions), the venue builder (feature #3: name → derived slug, free-text description, one image uploaded **or** picked from 3 supplied stock images; a saved-content preview; an authed dashboard + nav; a `Publish` stub that flips `publishState` and freezes the slug), AI copy + variants (feature #4: "Enhance with AI" polishes the description text, and Publish generates the 7 audience-tailored copy bundles — one per visitor type — validates them, and stores them as `PageVariant` rows, all-or-nothing with retries; a read-only "Generated pages" list with per-audience regenerate), the SSR published page (feature #5: the owner can view their server-rendered venue page — the 5-zone "Warm Minimalist" design — at `/preview`, with `?type=<visitor-type>` to preview each audience), the open REST/JSON API (feature #6: `GET /api/venues/<slug>/page?type=<visitor-type>` returns the precomputed page payload; `POST /api/venues/<slug>/events` records `visit` / `book-now-hover` / `book-now-click` events; an `Event` model; no auth — see the contract below), and the analytics dashboard (feature #7: at `/dashboard` — total visits, "Book Now" hover/click counts, a daily-visitors bar chart with an OLS trendline, gender / age-group breakdowns, "Book Now" clicks by gender, click-through % and a hover→click funnel %, and a per-audience conversion table — all server-computed over the recorded events; an empty venue shows zeroed / "No data yet" states, never an error), and the SSR customer site (feature #8: the public visitor page at `:5112/<slug>` — on every request it fetches the rendered page from the owner API for the active visitor type and renders the 5-zone design server-side; a mid-left hover-out "Preview as…" tab cycles the previewed audience via an `httpOnly` cookie (never in the URL); "Book Now" records the click and shows a confirmation modal — no real booking; `visit` / `book-now-hover` / `book-now-click` events post back to the owner API; an unknown slug or an unreachable owner API shows a friendly page, never a stack trace), and the demo seed (feature #9: `pnpm seed` builds the whole reviewer demo with no API key — Owner #1 with a published venue ("Hotel Mizrahi") and ~30 days of historical analytics, Owner #2 with a published venue ("The Levant House") and an empty dashboard; re-running resets the demo data). The feature build chain (#1–#9) is complete.
 
 ## Prerequisites
 
 - Node 22 LTS (see `.nvmrc`)
 - pnpm via Corepack: `corepack enable && corepack install`
-- An Anthropic API key (`ANTHROPIC_API_KEY` in `apps/owner/.env`) — not needed to install / build / run / test the app, but needed to use "Enhance with AI" and to Publish (which generates the 7 audience-tailored pages); without it those features show a "not configured" hint
+- An Anthropic API key (`ANTHROPIC_API_KEY` in `apps/owner/.env`) — **optional**; not needed to install / build / run / test / `pnpm seed` (the seed's variant copy is canned JSON), but needed to use "Enhance with AI" and to Publish (which generates the 7 audience-tailored pages); without it those features show a "not configured" hint
 
 ## Setup & run
 
@@ -37,15 +38,26 @@ pnpm install                                  # install workspace deps
 cp apps/owner/.env.example apps/owner/.env       # required — apps/owner needs DATABASE_URL + SESSION_SECRET (the example ships a dev SESSION_SECRET)
 cp apps/customer/.env.example apps/customer/.env
 pnpm db:migrate                               # create the SQLite database + apply migrations
-pnpm seed                                     # populate demo data (Venue #1 history, Venue #2 empty)
+pnpm seed                                     # populate the demo data — two demo accounts (see below); no API key needed
 pnpm dev                                      # run both apps — owner :5111, customer :5112
 ```
 
-Then open the owner platform at `http://localhost:5111` and a venue's public page at `http://localhost:5112/<slug>`. After you publish a venue, the owner can view its server-rendered page at `http://localhost:5111/preview` (append `?type=<visitor-type>` — e.g. `?type=female-18-30`, or `50%2B` for the `50+` groups — to preview each audience).
+Then open the owner platform at `http://localhost:5111` and a venue's public page at `http://localhost:5112/<slug>` (e.g. `http://localhost:5112/hotelmizrahi`). After you publish a venue, the owner can view its server-rendered page at `http://localhost:5111/preview` (append `?type=<visitor-type>` — e.g. `?type=female-18-30`, or `50%2B` for the `50+` groups — to preview each audience).
+
+### Demo accounts
+
+`pnpm seed` creates two demo owners — no `ANTHROPIC_API_KEY` required (the variant copy is canned JSON). Sign in at `http://localhost:5111`:
+
+| Account | Password | Venue | Customer page | Dashboard |
+|---|---|---|---|---|
+| `owner@mizrahitality.test` | `mizrahitality` | "Hotel Mizrahi" (`hotelmizrahi`) | `http://localhost:5112/hotelmizrahi` | full — ~30 days of analytics |
+| `owner2@mizrahitality.test` | `mizrahitality` | "The Levant House" (`thelevanthouse`) | `http://localhost:5112/thelevanthouse` | empty — "No data yet" until visitors arrive |
+
+Visit either customer page (and click "Book Now", or cycle the "Preview as…" tab) and watch that owner's `:5111/dashboard` numbers move. Re-run `pnpm seed` (with the dev servers stopped) to reset the demo data — the two demo owners are deleted and recreated; any other accounts you created are left alone.
 
 ### Running the customer site
 
-Open a published venue at `http://localhost:5112/<slug>` (the slug is shown in the builder; you need `pnpm dev` running so the customer app can reach the owner API at `OWNER_API_BASE_URL`). The page is composed entirely server-side from the owner REST API. Notes:
+Open a published venue at `http://localhost:5112/<slug>` — e.g. `http://localhost:5112/hotelmizrahi` after `pnpm seed`, or any slug shown in the builder (you need `pnpm dev` running so the customer app can reach the owner API at `OWNER_API_BASE_URL`). The page is composed entirely server-side from the owner REST API. Notes:
 
 - A mid-left **"Preview as…"** tab (hover, or keyboard-focus, to slide it out) switches which audience variant you're viewing — 2 genders × 3 age groups, plus "Neutral (default)" and an "Unknown / default" reset. It sets an `httpOnly` cookie the server reads; the visitor type **never appears in the URL or the page UI** — it's a reviewer aid only. Reload and it sticks (until you pick "Unknown / default").
 - **"Book Now"** records a `book-now-click` event and shows a friendly confirmation modal (Escape or a backdrop click closes it). There's no real booking or payment.
@@ -68,7 +80,7 @@ Uploaded venue images are written to `apps/owner/uploads/` (gitignored, created 
 | `pnpm db:migrate` | Create/apply a Prisma migration (`apps/owner/prisma/migrations/`) |
 | `pnpm db:push` | Push the schema to SQLite without a migration (legacy — prefer `db:migrate`) |
 | `pnpm db:studio` | Open Prisma Studio against the owner DB |
-| `pnpm seed` | Run `scripts/seed.mjs` |
+| `pnpm seed` | Run `scripts/seed.mjs` — (re)create the two demo accounts (see "Demo accounts"); resets the demo data on every run; needs only `DATABASE_URL` (run `pnpm db:migrate` first), no `ANTHROPIC_API_KEY` |
 
 Schema changes go through the `update-database` skill; the changelog is `apps/owner/prisma/CHANGELOG.md`.
 

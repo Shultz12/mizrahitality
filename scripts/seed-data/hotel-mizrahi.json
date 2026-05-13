@@ -1,0 +1,135 @@
+{
+  "male-18-30": {
+    "variant": "male-18-30",
+    "tagline": "Premium seaside stays without the hassle, with fast check-in and the Mediterranean right outside your door.",
+    "heroTrustPrimer": "Booking takes under two minutes.",
+    "story": {
+      "hook": "You want a stay that just works, not a sales pitch. Hotel Mizrahi keeps it simple and fast.",
+      "detail": "It sits right on the coast, with suites that open onto the Mediterranean and a private beach a short walk from your room.",
+      "detailBullets": [
+        "Fast Wi-Fi across the whole resort",
+        "Quick check-in with no waiting around",
+        "Private beach and palm-lined pools nearby",
+        "Valet parking, so you just hand over the keys"
+      ],
+      "nudge": "Pick your dates and lock them in now. No pressure, no upsell."
+    },
+    "highlightStripLine": "Fast Wi-Fi, quick check-in, and the sea right there.",
+    "closingHeading": "Lock in your dates",
+    "closingTrustLine": "Instant confirmation."
+  },
+  "male-31-50": {
+    "variant": "male-31-50",
+    "tagline": "Arrive, unwind, and let every detail be handled at a marble-and-sea resort built for travelers short on time.",
+    "heroTrustPrimer": "Reserve in under two minutes.",
+    "story": {
+      "hook": "You're balancing work, family, and travel, and you don't want to hunt for information. Hotel Mizrahi puts the essentials in front of you and handles the rest.",
+      "detail": "A coastal resort with marble halls, suites overlooking the Mediterranean, and a concierge who manages the logistics so your stay is genuinely effortless.",
+      "detailBullets": [
+        "Valet parking and a 24-hour concierge",
+        "Quiet suites with sea views",
+        "A full spa and unhurried fine dining",
+        "Fast Wi-Fi throughout, including the suites"
+      ],
+      "nudge": "Secure your reservation now and let the concierge take it from there."
+    },
+    "highlightStripLine": "Every detail handled, from valet parking to the concierge desk.",
+    "closingHeading": "Your suite is ready",
+    "closingTrustLine": "Instant, confirmed reservation."
+  },
+  "male-50+": {
+    "variant": "male-50+",
+    "tagline": "Classic comfort, attentive service, and quiet rooms by the sea, in a resort that has earned its reputation.",
+    "heroTrustPrimer": "Secure booking. We protect your privacy.",
+    "story": {
+      "hook": "You want comfort, calm, and service you can count on. Hotel Mizrahi was built around exactly that.",
+      "detail": "The resort sits right on the coast. Rooms are quiet and well kept. Marble halls, palm-lined pools, and a private beach are all an easy walk away. The staff are nearby whenever you need them.",
+      "detailBullets": [
+        "Quiet, comfortable rooms with sea views",
+        "A private beach and a full spa on site",
+        "Easy, level paths around the grounds",
+        "Attentive staff on hand all day"
+      ],
+      "nudge": "Reserve your dates today. We will take good care of the rest."
+    },
+    "highlightStripLine": "Quiet rooms, a private beach, and staff who look after every guest.",
+    "closingHeading": "Your room is waiting",
+    "closingTrustLine": "Secure, encrypted booking with instant confirmation."
+  },
+  "female-18-30": {
+    "variant": "female-18-30",
+    "tagline": "Sun-warmed marble, palm-fringed pools, and the Mediterranean glittering beyond your suite, this is the weekend you screenshot.",
+    "heroTrustPrimer": "Reserving takes about two minutes.",
+    "story": {
+      "hook": "You want somewhere that actually looks the way the photos promise, and feels even better in person. Hotel Mizrahi is that kind of place.",
+      "detail": "Picture cool marble halls, palm-lined pools catching the light, and a private beach where the day just slows down. Every corner of this coastal resort was made to be lingered in.",
+      "detailBullets": [
+        "Suites that open straight onto the sea",
+        "Palm-fringed pools and a quiet private beach",
+        "A spa for the slow mornings",
+        "Long, unhurried dinners as the sun drops"
+      ],
+      "nudge": "Grab the dates that work and make this the trip everyone asks you about."
+    },
+    "highlightStripLine": "The kind of place that looks even better in person than in the photos.",
+    "closingHeading": "Your escape is waiting",
+    "closingTrustLine": "Instant confirmation, no fuss."
+  },
+  "female-31-50": {
+    "variant": "female-31-50",
+    "tagline": "A calm, beautifully kept seaside retreat where the planning is handled and your only job is to relax.",
+    "heroTrustPrimer": "Secure booking, confirmed instantly.",
+    "story": {
+      "hook": "You're the one who researches everything, compares the options, and makes sure nothing gets missed. At Hotel Mizrahi, that work is already done.",
+      "detail": "It's a coastal resort that's quiet, spotless, and easy to settle into, with suites overlooking the Mediterranean and a concierge who answers questions before you have to ask. The practical things are sorted, so the days feel genuinely yours.",
+      "detailBullets": [
+        "Clean, comfortable suites with sea views",
+        "A private beach and a full spa close by",
+        "Fine dining without leaving the grounds",
+        "A 24-hour concierge for anything you need"
+      ],
+      "nudge": "Choose your dates and let the resort take care of the rest, so the only thing on your list is rest."
+    },
+    "highlightStripLine": "Quiet, spotless, and sorted, so your only job is to unwind.",
+    "closingHeading": "Your retreat is ready",
+    "closingTrustLine": "Secure booking with instant confirmation."
+  },
+  "female-50+": {
+    "variant": "female-50+",
+    "tagline": "A warm, gracious seaside resort where everything is spotless, the staff are kind, and the days feel unhurried.",
+    "heroTrustPrimer": "Simple, secure booking, and help is always close.",
+    "story": {
+      "hook": "You want somewhere calm and welcoming, where you feel looked after and at ease. Hotel Mizrahi was made for exactly that.",
+      "detail": "The resort sits right on the coast, with cool marble halls, palm-lined pools, and a quiet private beach. The suites are immaculate and comfortable, the grounds are easy to move around, and the staff are warm and close at hand. It is the kind of place where you settle in quickly and make the trip a happy memory.",
+      "detailBullets": [
+        "Immaculate, comfortable suites with sea views",
+        "A calm private beach and a gentle spa",
+        "Easy, level paths through the grounds",
+        "Warm staff nearby whenever you need them"
+      ],
+      "nudge": "Choose your dates and come settle in, and let the resort look after the rest."
+    },
+    "highlightStripLine": "Spotless, gracious, and warm, the kind of place you come back to.",
+    "closingHeading": "Come settle in",
+    "closingTrustLine": "Secure booking, instant confirmation, and help whenever you need it."
+  },
+  "neutral": {
+    "variant": "neutral",
+    "tagline": "A grand seaside resort where marble halls, palm-lined pools, and Mediterranean suites make every stay feel effortless.",
+    "heroTrustPrimer": "Takes less than two minutes.",
+    "story": {
+      "hook": "Hotel Mizrahi is a coastal resort built around comfort, calm, and an easy stay. From the moment you arrive, the details are handled for you.",
+      "detail": "It pairs marble halls and palm-lined pools with suites that open onto the Mediterranean, plus a private beach, a full spa, and unhurried fine dining a short walk from your room.",
+      "detailBullets": [
+        "Suites overlooking the Mediterranean",
+        "A private beach, pools, and a full spa",
+        "Fast Wi-Fi throughout the resort",
+        "Valet parking and a 24-hour concierge"
+      ],
+      "nudge": "Your dates are still open, so reserve them now and let the concierge take it from there."
+    },
+    "highlightStripLine": "Marble halls, a private beach, and a concierge who handles every detail.",
+    "closingHeading": "Your suite is waiting",
+    "closingTrustLine": "Instant confirmation."
+  }
+}

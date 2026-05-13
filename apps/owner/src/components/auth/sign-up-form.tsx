@@ -12,9 +12,9 @@ const initialState: AuthState = {};
 export function SignUpForm() {
   const [state, formAction, pending] = useActionState(signUpAction, initialState);
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6 rounded-xl border bg-card p-6">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">Create your account</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
         <p className="text-sm text-muted-foreground">Email and a password — that&apos;s all.</p>
       </div>
 
@@ -63,9 +63,9 @@ export function SignUpForm() {
         </Button>
       </form>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="border-t pt-4 text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link href="/sign-in" className="text-primary underline-offset-4 hover:underline">
+        <Link href="/sign-in" className="font-medium text-foreground hover:underline">
           Sign in
         </Link>
       </p>

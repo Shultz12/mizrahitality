@@ -1,8 +1,8 @@
-// Small presentational bits shared by the dashboard page (feature #7): a stat card (a label + a big
-// number + an optional hint), the `—`-aware ratio formatter, and the "No data yet" placeholder the
-// chart components drop in when their series is empty/all-zero. Pure markup — server components.
+// Small presentational bits shared by the dashboard page (feature #7, restyled in #10): a stat card
+// (a label + a big number + an optional hint), the `—`-aware ratio formatter, and the "No data yet"
+// placeholder the chart components drop in when their series is empty/all-zero. Pure markup — server
+// components.
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { Ratio } from '@/lib/analytics';
 
@@ -13,15 +13,11 @@ export function fmtRatio(r: Ratio): string {
 
 export function StatCard({ title, value, hint }: { title: string; value: string; hint?: string }) {
   return (
-    <Card>
-      <CardHeader className="pb-1">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-0.5">
-        <p className="text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
-        {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-2 rounded-lg border bg-card p-6">
+      <p className="text-sm font-medium text-muted-foreground">{title}</p>
+      <p className="text-3xl font-semibold tracking-tight tabular-nums text-foreground">{value}</p>
+      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+    </div>
   );
 }
 

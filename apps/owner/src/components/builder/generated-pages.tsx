@@ -48,7 +48,7 @@ export function GeneratedPages({
                     {!row ? (
                       <p className="text-xs text-muted-foreground italic">(missing — re-publish)</p>
                     ) : parsed && parsed.ok ? (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         &ldquo;{parsed.value.copy.tagline}&rdquo;
                       </p>
                     ) : (

@@ -12,10 +12,10 @@ const initialState: AuthState = {};
 export function SignInForm() {
   const [state, formAction, pending] = useActionState(signInAction, initialState);
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6 rounded-xl border bg-card p-6">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">Sign in</h1>
-        <p className="text-sm text-muted-foreground">Welcome back.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
+        <p className="text-sm text-muted-foreground">Sign in to your owner portal.</p>
       </div>
 
       <form action={formAction} noValidate className="space-y-4">
@@ -53,9 +53,9 @@ export function SignInForm() {
         </Button>
       </form>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="border-t pt-4 text-center text-sm text-muted-foreground">
         Need an account?{' '}
-        <Link href="/sign-up" className="text-primary underline-offset-4 hover:underline">
+        <Link href="/sign-up" className="font-medium text-foreground hover:underline">
           Sign up
         </Link>
       </p>

@@ -67,8 +67,10 @@ export function ImagePicker({ current }: { current: CurrentImage | null }) {
               <label
                 key={img.id}
                 className={cn(
-                  'cursor-pointer overflow-hidden rounded-lg ring-2 transition-colors',
-                  stockImageId === img.id ? 'ring-primary' : 'ring-transparent hover:ring-border',
+                  'cursor-pointer overflow-hidden rounded-lg border bg-card p-3 transition-colors',
+                  stockImageId === img.id
+                    ? 'border-primary ring-2 ring-primary'
+                    : 'hover:border-foreground/40',
                 )}
               >
                 <input
@@ -80,8 +82,12 @@ export function ImagePicker({ current }: { current: CurrentImage | null }) {
                   className="sr-only"
                 />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img.path} alt={img.label} className="aspect-video w-full object-cover" />
-                <span className="block px-2 py-1 text-xs">{img.label}</span>
+                <img
+                  src={img.path}
+                  alt={img.label}
+                  className="aspect-video w-full rounded-md object-cover"
+                />
+                <span className="mt-2 block text-xs font-medium">{img.label}</span>
               </label>
             ))}
           </div>

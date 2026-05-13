@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>B2B Utility - Authentication</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "text-muted": "#6B7280",
+                        "on-secondary-fixed": "#151c27",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#dce2f3",
+                        "tertiary-fixed-dim": "#dec29a",
+                        "surface-container-high": "#eae7e9",
+                        "outline": "#76777d",
+                        "surface-container-highest": "#e4e2e4",
+                        "surface-container-low": "#f6f3f5",
+                        "success": "#059669",
+                        "on-secondary-fixed-variant": "#404754",
+                        "outline-variant": "#c6c6cd",
+                        "on-primary-container": "#7c839b",
+                        "app-canvas": "#F9FAFB",
+                        "surface-bright": "#fcf8fa",
+                        "on-tertiary-fixed-variant": "#574425",
+                        "tertiary-fixed": "#fcdeb5",
+                        "inverse-surface": "#303032",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#271901",
+                        "primary": "#000000",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#1b1b1d",
+                        "surface-container": "#f0edef",
+                        "tertiary": "#000000",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#dae2fd",
+                        "surface-tint": "#565e74",
+                        "secondary": "#585f6c",
+                        "surface-variant": "#e4e2e4",
+                        "primary-container": "#131b2e",
+                        "primary-fixed-dim": "#bec6e0",
+                        "secondary-fixed": "#dce2f3",
+                        "secondary-fixed-dim": "#c0c7d6",
+                        "on-primary-fixed": "#131b2e",
+                        "border-subtle": "#E5E7EB",
+                        "on-tertiary-container": "#98805d",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f3f0f2",
+                        "tertiary-container": "#271901",
+                        "error": "#DC2626",
+                        "text-primary": "#111827",
+                        "surface": "#FFFFFF",
+                        "on-surface-variant": "#45464d",
+                        "surface-dim": "#dcd9db",
+                        "inverse-primary": "#bec6e0",
+                        "on-secondary-container": "#5e6572",
+                        "on-error": "#ffffff",
+                        "on-surface": "#1b1b1d",
+                        "background": "#fcf8fa"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "container-padding": "24px",
+                        "stack-md": "16px",
+                        "gutter": "16px",
+                        "touch-target-min": "44px",
+                        "stack-lg": "24px",
+                        "stack-sm": "8px"
+                    },
+                    fontFamily: {
+                        "page-title": ["Inter"],
+                        "body-regular": ["Inter"],
+                        "body-large": ["Inter"],
+                        "label": ["Inter"],
+                        "helper-text": ["Inter"],
+                        "section-header": ["Inter"]
+                    },
+                    fontSize: {
+                        "page-title": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-regular": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-large": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label": ["14px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "helper-text": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "section-header": ["16px", { "lineHeight": "24px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-app-canvas min-h-screen flex items-center justify-center p-container-padding font-body-regular text-body-regular text-on-surface antialiased">
+<!-- Auth Container -->
+<main class="w-full max-w-[400px]">
+<!-- Auth Card -->
+<div class="bg-surface border border-border-subtle rounded-xl p-stack-lg flex flex-col gap-stack-lg">
+<!-- Header -->
+<div class="text-center flex flex-col gap-stack-sm">
+<div class="inline-flex justify-center items-center w-12 h-12 rounded-full bg-surface-container mx-auto mb-2 border border-border-subtle">
+<span class="material-symbols-outlined text-primary" data-icon="business" style="font-size: 24px;">business</span>
+</div>
+<h1 class="font-page-title text-page-title text-text-primary tracking-tight">Create an account</h1>
+<p class="font-body-regular text-body-regular text-text-muted">Sign in to your enterprise portal</p>
+</div>
+<!-- Form Placeholder -->
+<form class="flex flex-col gap-stack-md" onsubmit="event.preventDefault();">
+<!-- Email Input -->
+<div class="flex flex-col gap-stack-sm"><label class="font-label text-label text-text-primary" for="full-name">Full Name</label><input class="w-full min-h-[44px] px-3 py-2 bg-surface border border-border-subtle rounded-lg font-body-regular text-body-regular text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow" id="full-name" placeholder="John Doe" type="text"/></div><div class="flex flex-col gap-stack-sm">
+<label class="font-label text-label text-text-primary" for="email">Email address</label>
+<input class="w-full min-h-[44px] px-3 py-2 bg-surface border border-border-subtle rounded-lg font-body-regular text-body-regular text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow" id="email" placeholder="name@company.com" type="email"/>
+</div>
+<!-- Password Input -->
+<div class="flex flex-col gap-stack-sm">
+<div class="flex justify-between items-center">
+<label class="font-label text-label text-text-primary" for="password">Password</label>
+<a class="font-helper-text text-helper-text text-text-muted hover:text-text-primary transition-colors" href="#">Forgot?</a>
+</div>
+<input class="w-full min-h-[44px] px-3 py-2 bg-surface border border-border-subtle rounded-lg font-body-regular text-body-regular text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow" id="password" placeholder="••••••••" type="password"/>
+</div>
+<!-- Action Button -->
+<button class="mt-2 w-full min-h-[44px] bg-text-primary text-surface rounded-lg font-label text-label hover:bg-on-surface-variant transition-colors duration-150 flex items-center justify-center gap-2" type="submit">Sign Up <span class="material-symbols-outlined" data-icon="arrow_forward" style="font-size: 18px;">arrow_forward</span></button>
+</form>
+<!-- Footer Actions -->
+<div class="pt-4 border-t border-border-subtle text-center">
+<p class="font-helper-text text-helper-text text-text-muted">Already have an account? <a class="font-label text-label text-text-primary hover:underline underline-offset-2" href="#">Sign In</a></p>
+</div>
+</div>
+<!-- Optional Support Link -->
+<div class="mt-stack-md text-center">
+<a class="font-helper-text text-helper-text text-text-muted hover:text-text-primary transition-colors flex items-center justify-center gap-1" href="#">
+<span class="material-symbols-outlined" data-icon="help" style="font-size: 14px;">help</span>
+                Contact Support
+            </a>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Site Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#dce2f3",
+                        "background": "#fcf8fa",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#fcf8fa",
+                        "on-primary-fixed": "#131b2e",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#dae2fd",
+                        "on-primary": "#ffffff",
+                        "surface": "#FFFFFF",
+                        "on-secondary": "#ffffff",
+                        "border-subtle": "#E5E7EB",
+                        "success": "#059669",
+                        "primary-container": "#131b2e",
+                        "surface-tint": "#565e74",
+                        "on-tertiary-container": "#98805d",
+                        "surface-container-highest": "#e4e2e4",
+                        "secondary-fixed": "#dce2f3",
+                        "tertiary": "#000000",
+                        "surface-container": "#f0edef",
+                        "on-secondary-fixed-variant": "#404754",
+                        "inverse-primary": "#bec6e0",
+                        "inverse-surface": "#303032",
+                        "on-surface": "#1b1b1d",
+                        "tertiary-container": "#271901",
+                        "primary": "#000000",
+                        "on-background": "#1b1b1d",
+                        "app-canvas": "#F9FAFB",
+                        "on-secondary-container": "#5e6572",
+                        "error-container": "#ffdad6",
+                        "outline-variant": "#c6c6cd",
+                        "secondary": "#585f6c",
+                        "on-primary-container": "#7c839b",
+                        "secondary-fixed-dim": "#c0c7d6",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#76777d",
+                        "surface-dim": "#dcd9db",
+                        "on-secondary-fixed": "#151c27",
+                        "tertiary-fixed-dim": "#dec29a",
+                        "tertiary-fixed": "#fcdeb5",
+                        "surface-container-low": "#f6f3f5",
+                        "inverse-on-surface": "#f3f0f2",
+                        "surface-variant": "#e4e2e4",
+                        "text-primary": "#111827",
+                        "on-tertiary-fixed": "#271901",
+                        "on-tertiary-fixed-variant": "#574425",
+                        "error": "#DC2626",
+                        "on-surface-variant": "#45464d",
+                        "surface-container-high": "#eae7e9",
+                        "text-muted": "#6B7280",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "primary-fixed-dim": "#bec6e0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "stack-lg": "24px",
+                        "stack-sm": "8px",
+                        "touch-target-min": "44px",
+                        "gutter": "16px",
+                        "container-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "body-regular": ["Inter"],
+                        "section-header": ["Inter"],
+                        "helper-text": ["Inter"],
+                        "label": ["Inter"],
+                        "body-large": ["Inter"],
+                        "page-title": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-regular": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "section-header": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "helper-text": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "label": ["14px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-large": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "page-title": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-app-canvas text-on-background font-body-regular h-screen overflow-hidden flex">
+<!-- SideNavBar -->
+<nav class="bg-surface dark:bg-inverse-surface fixed left-0 top-0 h-full w-[240px] border-r border-border-subtle dark:border-outline-variant flex flex-col p-stack-md z-20">
+<!-- Header -->
+<div class="flex items-center gap-3 px-4 py-4 mb-stack-md">
+<div class="w-10 h-10 rounded bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined" data-weight="fill">domain</span>
+</div>
+<div>
+<h1 class="font-page-title text-page-title text-primary dark:text-inverse-primary tracking-tight leading-none mb-1">B2B Utility</h1>
+<p class="font-helper-text text-helper-text text-text-muted">Enterprise Portal</p>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<div class="flex flex-col gap-1 flex-1">
+<a class="flex items-center gap-3 px-4 py-3 text-text-muted dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors active:scale-[0.98] transition-transform duration-150 rounded-lg touch-target-min" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label text-label">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg active:scale-[0.98] transition-transform duration-150 touch-target-min" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="font-label text-label">Projects</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-text-muted dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors active:scale-[0.98] transition-transform duration-150 rounded-lg touch-target-min" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label text-label">Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 ml-[240px] flex flex-col h-screen overflow-hidden">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-inverse-surface sticky top-0 w-full border-b border-border-subtle dark:border-outline-variant flex justify-between items-center h-[64px] px-container-padding z-10 shrink-0">
+<div class="flex-1"></div> <!-- Spacer for center alignment if needed, but search is on right -->
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border border-border-subtle rounded-lg font-body-regular text-body-regular min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow w-64" placeholder="Search..." type="text"/>
+</div>
+<button class="text-text-muted dark:text-on-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors cursor-pointer active:opacity-80 flex items-center justify-center w-[44px] h-[44px] rounded-full">
+<span class="material-symbols-outlined text-[24px]">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Split Pane Builder Area -->
+<main class="flex flex-1 overflow-hidden h-full">
+<!-- Left Pane: Configuration -->
+<aside class="w-[400px] bg-surface border-r border-border-subtle overflow-y-auto shrink-0 flex flex-col">
+<div class="p-container-padding border-b border-border-subtle sticky top-0 bg-surface z-10">
+<h2 class="font-page-title text-page-title text-primary">Site Configuration</h2>
+<p class="font-helper-text text-helper-text text-text-muted mt-1">Adjust the content and structure of your page.</p>
+</div>
+<div class="p-container-padding flex flex-col gap-stack-lg">
+<!-- Section: Brand Details -->
+<section class="flex flex-col gap-stack-md">
+<h3 class="font-section-header text-section-header text-primary border-b border-border-subtle pb-2">Brand Details</h3>
+<div class="flex flex-col gap-1">
+<label class="font-label text-label text-on-surface">Brand Name</label>
+<input class="w-full bg-surface border border-border-subtle rounded px-3 py-2 text-body-regular min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow" type="text" value="Acme Corp"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label text-label text-on-surface">Logo Upload</label>
+<div class="border border-dashed border-border-subtle rounded-lg p-4 flex flex-col items-center justify-center bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer min-h-[88px]">
+<span class="material-symbols-outlined text-text-muted mb-2">cloud_upload</span>
+<span class="font-helper-text text-helper-text text-text-muted">Click to upload SVG or PNG</span>
+</div>
+</div>
+</section>
+<!-- Section: Hero Section -->
+<section class="flex flex-col gap-stack-md">
+<h3 class="font-section-header text-section-header text-primary border-b border-border-subtle pb-2">Hero Section</h3>
+<div class="flex flex-col gap-1">
+<label class="font-label text-label text-on-surface">Headline</label>
+<input class="w-full bg-surface border border-border-subtle rounded px-3 py-2 text-body-regular min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow" type="text" value="Streamline Your Enterprise Operations"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label text-label text-on-surface">Subheadline</label>
+<textarea class="w-full bg-surface border border-border-subtle rounded px-3 py-2 text-body-regular focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow resize-none" rows="3">Our comprehensive suite of B2B tools enables organizations to scale securely and efficiently with zero downtime.</textarea>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label text-label text-on-surface">CTA Text</label>
+<input class="w-full bg-surface border border-border-subtle rounded px-3 py-2 text-body-regular min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow" type="text" value="Get Started"/>
+</div>
+</section>
+<!-- Section: Features -->
+<section class="flex flex-col gap-stack-md pb-stack-lg">
+<h3 class="font-section-header text-section-header text-primary border-b border-border-subtle pb-2 flex justify-between items-center">
+                            Features
+                            <button class="text-primary hover:text-surface-tint transition-colors p-1 rounded hover:bg-surface-container">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</h3>
+<div class="border border-border-subtle rounded-lg p-stack-md bg-surface-container-low flex flex-col gap-3 relative group">
+<button class="absolute top-2 right-2 text-text-muted hover:text-error transition-colors hidden group-hover:block">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+<div class="flex flex-col gap-1">
+<label class="font-helper-text text-helper-text text-on-surface-variant">Feature Title</label>
+<input class="w-full bg-surface border border-border-subtle rounded px-3 py-1.5 text-body-regular min-h-[36px] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow" type="text" value="Automated Workflows"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-helper-text text-helper-text text-on-surface-variant">Description</label>
+<textarea class="w-full bg-surface border border-border-subtle rounded px-3 py-1.5 text-body-regular focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow resize-none" rows="2">Reduce manual entry by connecting your existing data pipelines instantly.</textarea>
+</div>
+</div>
+<div class="border border-border-subtle rounded-lg p-stack-md bg-surface-container-low flex flex-col gap-3 relative group">
+<button class="absolute top-2 right-2 text-text-muted hover:text-error transition-colors hidden group-hover:block">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+<div class="flex flex-col gap-1">
+<label class="font-helper-text text-helper-text text-on-surface-variant">Feature Title</label>
+<input class="w-full bg-surface border border-border-subtle rounded px-3 py-1.5 text-body-regular min-h-[36px] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow" type="text" value="Enterprise Security"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-helper-text text-helper-text text-on-surface-variant">Description</label>
+<textarea class="w-full bg-surface border border-border-subtle rounded px-3 py-1.5 text-body-regular focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-shadow resize-none" rows="2">Bank-grade encryption and compliance tools built directly into the platform core.</textarea>
+</div>
+</div>
+</section>
+</div>
+</aside>
+<!-- Right Pane: Preview -->
+<div class="flex-1 bg-surface-container-low overflow-y-auto p-container-padding flex justify-center relative">
+<!-- Floating Action/View Toggles for Preview -->
+<div class="absolute top-6 right-6 flex gap-2 bg-surface p-1 rounded-lg border border-border-subtle shadow-sm z-10">
+<button class="w-10 h-10 flex items-center justify-center rounded text-primary bg-surface-container transition-colors touch-target-min">
+<span class="material-symbols-outlined">desktop_windows</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded text-text-muted hover:bg-surface-container-low transition-colors touch-target-min">
+<span class="material-symbols-outlined">smartphone</span>
+</button>
+</div>
+<!-- Preview Canvas -->
+<div class="w-full max-w-[800px] h-max min-h-[800px] bg-surface border border-border-subtle rounded shadow-sm flex flex-col overflow-hidden my-4">
+<!-- Generated Site: Header -->
+<header class="border-b border-border-subtle px-8 py-5 flex justify-between items-center bg-surface">
+<div class="font-page-title text-page-title text-primary tracking-tight">Acme Corp</div>
+<nav class="flex gap-6">
+<a class="font-label text-label text-on-surface-variant hover:text-primary transition-colors" href="#">Products</a>
+<a class="font-label text-label text-on-surface-variant hover:text-primary transition-colors" href="#">Solutions</a>
+<a class="font-label text-label text-on-surface-variant hover:text-primary transition-colors" href="#">Pricing</a>
+</nav>
+<button class="bg-primary text-on-primary font-label text-label px-5 py-2.5 rounded hover:bg-surface-tint transition-colors min-h-[44px]">Contact Sales</button>
+</header>
+<!-- Generated Site: Hero Section -->
+<section class="px-8 py-20 flex flex-col items-center text-center bg-surface relative overflow-hidden">
+<!-- Abstract Background Decoration -->
+<div class="absolute inset-0 bg-gradient-to-b from-surface-container-low to-surface opacity-50 pointer-events-none"></div>
+<h1 class="text-[48px] leading-[56px] font-bold text-primary max-w-[600px] mb-6 relative z-10 tracking-tight">
+                            Streamline Your Enterprise Operations
+                        </h1>
+<p class="font-body-large text-body-large text-on-surface-variant max-w-[500px] mb-8 relative z-10 text-[18px] leading-[28px]">
+                            Our comprehensive suite of B2B tools enables organizations to scale securely and efficiently with zero downtime.
+                        </p>
+<div class="flex gap-4 relative z-10">
+<button class="bg-primary text-on-primary font-label text-label px-8 py-3 rounded hover:bg-surface-tint transition-colors min-h-[44px] text-[16px]">
+                                Get Started
+                            </button>
+<button class="bg-surface border border-border-subtle text-primary font-label text-label px-8 py-3 rounded hover:bg-surface-container-low transition-colors min-h-[44px] text-[16px]">
+                                View Demo
+                            </button>
+</div>
+</section>
+<!-- Generated Site: Features Section (Bento Grid Style) -->
+<section class="px-8 py-16 bg-surface-bright border-t border-border-subtle flex-1">
+<div class="text-center mb-12">
+<h2 class="font-page-title text-page-title text-primary mb-3">Core Capabilities</h2>
+<p class="font-body-regular text-body-regular text-on-surface-variant max-w-[400px] mx-auto">Everything you need to manage your organization's infrastructure in one unified platform.</p>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<!-- Feature 1 -->
+<div class="bg-surface border border-border-subtle rounded-xl p-8 hover:border-primary transition-colors duration-300 flex flex-col items-start shadow-sm">
+<div class="w-12 h-12 rounded bg-primary-container text-on-primary-container flex items-center justify-center mb-6">
+<span class="material-symbols-outlined">account_tree</span>
+</div>
+<h3 class="font-section-header text-section-header text-primary mb-2">Automated Workflows</h3>
+<p class="font-body-regular text-body-regular text-on-surface-variant">Reduce manual entry by connecting your existing data pipelines instantly.</p>
+</div>
+<!-- Feature 2 -->
+<div class="bg-surface border border-border-subtle rounded-xl p-8 hover:border-primary transition-colors duration-300 flex flex-col items-start shadow-sm">
+<div class="w-12 h-12 rounded bg-secondary-container text-on-secondary-container flex items-center justify-center mb-6">
+<span class="material-symbols-outlined">security</span>
+</div>
+<h3 class="font-section-header text-section-header text-primary mb-2">Enterprise Security</h3>
+<p class="font-body-regular text-body-regular text-on-surface-variant">Bank-grade encryption and compliance tools built directly into the platform core.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+</div>
+</body></html>

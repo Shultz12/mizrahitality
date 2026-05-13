@@ -32,13 +32,13 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Welcome, {owner.email}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
 
       <Card>
         <CardHeader>
           <CardTitle>Your venue</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           {venue ? (
             <>
               <div className="flex items-start gap-4">
@@ -48,10 +48,10 @@ export default async function DashboardPage() {
                   alt={`${venue.name} photo`}
                   className="h-16 w-24 shrink-0 rounded-md object-cover"
                 />
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   <p className="font-medium">{venue.name}</p>
                   <p className="text-sm text-muted-foreground">/{venue.slug}</p>
-                  <p className="text-sm text-muted-foreground">Status: {venue.publishState}</p>
+                  <StatusChip published={venue.publishState === 'published'} />
                 </div>
               </div>
               <Link href="/builder" className={buttonVariants({ variant: 'outline' })}>
@@ -79,6 +79,18 @@ export default async function DashboardPage() {
         </p>
       )}
     </div>
+  );
+}
+
+function StatusChip({ published }: { published: boolean }) {
+  return published ? (
+    <span className="inline-flex items-center rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
+      Published
+    </span>
+  ) : (
+    <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+      Draft
+    </span>
   );
 }
 

@@ -2,9 +2,10 @@
 // never sees this and the visitor type is never in the URL or the page UI. Server Component, no
 // client JS: a fixed, always-visible vertical tab handle; on hover (and keyboard focus-within) a
 // warm panel slides out via a pure-CSS transform. The panel is a `<form action={selectVisitorTypeAction}>`
-// with one submit button per `allVisitorVariants()` (7) plus an `value=""` "Unknown / default"
-// button — submitting sets (or clears) the `httpOnly` `miz_visitor_type` cookie and re-renders SSR
-// for that variant; subsequent analytics events are tagged with it.
+// with one submit button per `allVisitorVariants()` (7 — "Neutral (default)" covers the unknown
+// case, since absent cookie also falls back to `neutral`); submitting sets the `httpOnly`
+// `miz_visitor_type` cookie and re-renders SSR for that variant; subsequent analytics events are
+// tagged with it.
 
 import { allVisitorVariants, type VisitorType } from '@mizrahitality/contracts';
 import { cn } from '@/lib/utils';
@@ -68,7 +69,6 @@ export function DemoTab({ current }: { current: VisitorType }) {
         {allVisitorVariants().map((v) => (
           <VariantButton key={v} value={v} label={variantLabel(v)} selected={v === current} />
         ))}
-        <VariantButton value="" label="Unknown / default" selected={false} />
         <p className="px-1 pt-2 text-[11px] leading-[1.4] text-[#2C2824]/45">
           Reviewer aid — the real site never shows this.
         </p>

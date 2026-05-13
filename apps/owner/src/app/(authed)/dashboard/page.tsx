@@ -9,6 +9,7 @@
 
 import Link from 'next/link';
 import { requireOwner } from '@/lib/auth';
+import { env } from '@/lib/env';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isStockImageId, stockImagePath } from '@/lib/stock-images';
@@ -25,6 +26,10 @@ export default async function DashboardPage() {
   const owner = await requireOwner();
   const venue = owner.venue;
   const data = venue ? await getDashboardData(venue.id) : null;
+  const published = venue?.publishState === 'published';
+  const customerSiteUrl = venue
+    ? `${env.CUSTOMER_BASE_URL}/${encodeURIComponent(venue.slug)}`
+    : null;
 
   return (
     <div className="space-y-8">
@@ -47,12 +52,24 @@ export default async function DashboardPage() {
                 <div className="space-y-1">
                   <p className="font-medium">{venue.name}</p>
                   <p className="text-sm text-muted-foreground">/{venue.slug}</p>
-                  <StatusChip published={venue.publishState === 'published'} />
+                  <StatusChip published={published} />
                 </div>
               </div>
-              <Link href="/builder" className={buttonVariants({ variant: 'outline' })}>
-                Edit in the builder
-              </Link>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {published && customerSiteUrl && (
+                  <a
+                    href={customerSiteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={buttonVariants()}
+                  >
+                    Visit published site ↗
+                  </a>
+                )}
+                <Link href="/builder" className={buttonVariants({ variant: 'outline' })}>
+                  Edit in the builder
+                </Link>
+              </div>
             </>
           ) : (
             <>
@@ -67,7 +84,9 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      {venue?.publishState === 'published' ? <PreviewLinksCard /> : null}
+      {published && customerSiteUrl ? (
+        <PreviewLinksCard customerSiteUrl={customerSiteUrl} />
+      ) : null}
 
       {data ? (
         <DashboardLive initialData={data} />

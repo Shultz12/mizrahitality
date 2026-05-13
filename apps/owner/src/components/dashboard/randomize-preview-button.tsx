@@ -1,20 +1,25 @@
 'use client';
 
-// Tiny client subcomponent for the dashboard's "Preview your published page" card: picks a random
-// VisitorType per click and opens `/preview?type=<variant>` in a new tab. Kept separate from the
-// parent Server Component so the persona-label rendering (which pulls in the large
-// `lib/templates.ts` prompt assets) stays out of the client bundle.
+// Small client subcomponent for the dashboard's "Preview your published page" card: picks a uniform
+// random variant from the 7 (`allVisitorVariants()`) and opens the live customer-side page in a new
+// tab with `?type=<picked>` so the visit logs as a real entry of that type — same contract as the
+// per-variant links above it.
 
 import { allVisitorVariants } from '@mizrahitality/contracts';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-export function RandomizePreviewButton({ className }: { className?: string }) {
-  const variants = allVisitorVariants();
-
+export function RandomizePreviewButton({
+  customerSiteUrl,
+  className,
+}: {
+  customerSiteUrl: string;
+  className?: string;
+}) {
   function handleClick() {
-    const pick = variants[Math.floor(Math.random() * variants.length)] ?? 'neutral';
-    window.open(`/preview?type=${encodeURIComponent(pick)}`, '_blank', 'noreferrer');
+    const variants = allVisitorVariants();
+    const pick = variants[Math.floor(Math.random() * variants.length)]!;
+    window.open(`${customerSiteUrl}?type=${encodeURIComponent(pick)}`, '_blank', 'noreferrer');
   }
 
   return (

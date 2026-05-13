@@ -1,16 +1,23 @@
 import { notFound } from 'next/navigation';
-import { RENDERED_PAGE_SCHEMA_VERSION, type RenderedPage } from '@mizrahitality/contracts';
+import {
+  RENDERED_PAGE_SCHEMA_VERSION,
+  isVisitorType,
+  type RenderedPage,
+} from '@mizrahitality/contracts';
 import { env } from '@/lib/env';
 import { readVisitorType } from '@/lib/visitor-type-cookie';
 import { CustomerPage } from '@/components/published-page/customer-page';
 import { ServiceUnavailable } from '@/components/service-unavailable';
 
-// The SSR public visitor page — REQ-13/14/18/19. On every request it reads the active visitor type
-// from the `httpOnly` `miz_visitor_type` cookie (absent/unknown → `neutral`), asks the owner REST
-// API for the matching precomputed `RenderedPage` (`GET /api/venues/<slug>/page?type=…`, `no-store`),
-// and renders it server-side via `CustomerPage`. A 404 from the API → the friendly `not-found.tsx`;
-// any other failure (owner down, network, unreadable body) → `<ServiceUnavailable />` — never a
-// stack trace. Reading `cookies()` already makes this route dynamic; `force-dynamic` says so plainly.
+// The SSR public visitor page — REQ-13/14/18/19. On every request it picks the active visitor type
+// (a one-shot `?type=` query — only used by owner preview links from the dashboard/builder — wins
+// over the `httpOnly` `miz_visitor_type` cookie; absent/invalid both → `neutral`), asks the owner
+// REST API for the matching precomputed `RenderedPage` (`GET /api/venues/<slug>/page?type=…`,
+// `no-store`), and renders it server-side via `CustomerPage`. A 404 from the API → the friendly
+// `not-found.tsx`; any other failure (owner down, network, unreadable body) → `<ServiceUnavailable />`
+// — never a stack trace. The `?type=` doesn't write the cookie, so multiple preview tabs stay
+// independent and the on-page demo tab's state is never clobbered by a preview entry. Reading
+// `cookies()` already makes this route dynamic; `force-dynamic` says so plainly.
 
 export const dynamic = 'force-dynamic';
 
@@ -42,9 +49,18 @@ function isRenderedPage(value: unknown): value is RenderedPage {
   return true;
 }
 
-export default async function VenuePage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function VenuePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ type?: string | string[] }>;
+}) {
   const { slug } = await params;
-  const visitorType = await readVisitorType();
+  const { type: rawType } = await searchParams;
+  // A `?type=` from an owner preview link wins over the cookie — one-shot, doesn't update state.
+  const urlType = Array.isArray(rawType) ? rawType[0] : rawType;
+  const visitorType = isVisitorType(urlType) ? urlType : await readVisitorType();
 
   let res: Response;
   try {

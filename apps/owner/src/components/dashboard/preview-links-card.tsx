@@ -1,5 +1,8 @@
-// Dashboard card with one link per audience variant + a Random button — each opens the owner's
-// `/preview?type=<variant>` page in a new tab so the owner can see what each audience sees.
+// Dashboard card with one link per audience variant + a Random button — each opens the venue's
+// live customer-side page in a new tab with `?type=<variant>` appended, so the customer SSR
+// renders that audience and the resulting visit logs as a real entry of that type in the
+// dashboard analytics. The `?type=` is one-shot (it doesn't write the customer-site cookie), so
+// multiple preview tabs stay independent and the on-page demo tab's state isn't clobbered.
 // Server Component (persona-label render stays server-side, keeping the large `lib/templates.ts`
 // prompt assets out of the client bundle); the Random button is a small client subcomponent.
 //
@@ -20,11 +23,11 @@ import { RandomizePreviewButton } from './randomize-preview-button';
 // 50% minus half the row gap (`gap-2` = 0.5rem) → matches a single column's width.
 const CENTERED_CELL_WIDTH = 'sm:w-[calc(50%-0.25rem)]';
 
-function VariantLink({ variant }: { variant: string }) {
+function VariantLink({ variant, customerSiteUrl }: { variant: string; customerSiteUrl: string }) {
   const entry = templateEntry(variant as Parameters<typeof templateEntry>[0]);
   return (
     <a
-      href={`/preview?type=${encodeURIComponent(variant)}`}
+      href={`${customerSiteUrl}?type=${encodeURIComponent(variant)}`}
       target="_blank"
       rel="noreferrer"
       className={cn(
@@ -40,14 +43,14 @@ function VariantLink({ variant }: { variant: string }) {
   );
 }
 
-export function PreviewLinksCard() {
+export function PreviewLinksCard({ customerSiteUrl }: { customerSiteUrl: string }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Preview your published page</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Open each audience-tailored version in a new tab — or hit Random to jump to one at
-          random.
+          Each link opens the page as that audience and counts as a fresh visit in the analytics
+          below.
         </p>
       </CardHeader>
       <CardContent>
@@ -55,7 +58,7 @@ export function PreviewLinksCard() {
           {/* Row 1: Neutral, centered with the same cell width as a column. */}
           <li className="sm:col-span-2 sm:flex sm:justify-center">
             <div className={cn('w-full', CENTERED_CELL_WIDTH)}>
-              <VariantLink variant="neutral" />
+              <VariantLink variant="neutral" customerSiteUrl={customerSiteUrl} />
             </div>
           </li>
 
@@ -63,10 +66,10 @@ export function PreviewLinksCard() {
           {AGE_GROUPS.map((ag) => (
             <Fragment key={ag}>
               <li>
-                <VariantLink variant={`male-${ag}`} />
+                <VariantLink variant={`male-${ag}`} customerSiteUrl={customerSiteUrl} />
               </li>
               <li>
-                <VariantLink variant={`female-${ag}`} />
+                <VariantLink variant={`female-${ag}`} customerSiteUrl={customerSiteUrl} />
               </li>
             </Fragment>
           ))}
@@ -74,7 +77,10 @@ export function PreviewLinksCard() {
           {/* Row 5: Random, centered — same horizontal position as Neutral. */}
           <li className="sm:col-span-2 sm:flex sm:justify-center">
             <div className={cn('w-full', CENTERED_CELL_WIDTH)}>
-              <RandomizePreviewButton className="h-auto w-full justify-center px-3 py-2" />
+              <RandomizePreviewButton
+                customerSiteUrl={customerSiteUrl}
+                className="h-auto w-full justify-center px-3 py-2"
+              />
             </div>
           </li>
         </ul>

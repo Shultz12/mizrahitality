@@ -1,6 +1,7 @@
 import { requireOwner } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { isAiConfigured } from '@/lib/ai';
+import { env } from '@/lib/env';
 import { BuilderShell } from '@/components/builder/builder-shell';
 import { BuilderForm } from '@/components/builder/builder-form';
 import { VenuePreview } from '@/components/builder/venue-preview';
@@ -22,6 +23,9 @@ export default async function BuilderPage() {
     : null;
   const aiConfigured = isAiConfigured();
   const published = venue?.publishState === 'published';
+  const customerSiteUrl = venue
+    ? `${env.CUSTOMER_BASE_URL}/${encodeURIComponent(venue.slug)}`
+    : null;
 
   return (
     <BuilderShell
@@ -46,7 +50,11 @@ export default async function BuilderPage() {
 
         <PublishSection published={published} />
 
-        <GeneratedPages variants={venue?.variants ?? []} published={published} />
+        <GeneratedPages
+          variants={venue?.variants ?? []}
+          published={published}
+          customerSiteUrl={customerSiteUrl}
+        />
       </div>
     </BuilderShell>
   );

@@ -19,4 +19,7 @@ export const env = {
   // Optional — the app boots without it; enhance & publish are gated on isAiConfigured() and
   // return a clear "set GOOGLE_API_KEY" message when empty.
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY ?? '',
+  /** Public base URL of the mizrahitality-customer site — used to build "visit the live page"
+   *  links from the owner UI (`<CUSTOMER_BASE_URL>/<slug>`). Defaults to the dev port. */
+  CUSTOMER_BASE_URL: process.env.CUSTOMER_BASE_URL ?? 'http://localhost:5112',
 } as const;

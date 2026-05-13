@@ -2,16 +2,16 @@
 
 // Server Actions for the venue builder. `saveVenueAction` persists the owner's three inputs (name →
 // derived slug, free-text description, one image — a stock pick or an upload) onto their single
-// `Venue` (feature #3). Feature #4 adds the AI surface: `publishAction` — a stateful `useActionState`
-// action that delegates to the publish pipeline (lib/publish.ts → generates + validates the 7
-// PageVariant copy bundles, all-or-nothing, with retries); `enhanceDescriptionAction` — polishes
-// the description text (the owner accepts or keeps their own); `regenerateVariantAction` — re-runs
-// one published variant (re-validates before swapping). The AI steps live in lib/ai/ (a lazily-
-// constructed Anthropic client + the two text steps); the prompt assets are transcribed in
-// lib/templates.ts. Thin orchestration over auth.ts / validation.ts / slug.ts / uploads.ts /
-// stock-images.ts / lib/ai / lib/publish / Prisma — exercised by the manual click-through plus the
-// helper unit/integration tests (publish.integration.test.ts targets `runPublishPipeline`), not by
-// direct action tests (actions need a request context for `cookies()`).
+// `Venue` (feature #3). The AI surface: `publishAction` — a stateful `useActionState` action that
+// delegates to the publish pipeline (lib/publish.ts → polishes the description, generates +
+// validates the 7 PageVariant copy bundles from the polished text, persists everything
+// transactionally, all-or-nothing, with retries); `regenerateVariantAction` — re-runs one published
+// variant (re-validates before swapping). The AI steps live in lib/ai/ (a lazily-constructed Google
+// GenAI client + the two text steps); the prompt assets are transcribed in lib/templates.ts. Thin
+// orchestration over auth.ts / validation.ts / slug.ts / uploads.ts / stock-images.ts / lib/ai /
+// lib/publish / Prisma — exercised by the manual click-through plus the helper unit/integration
+// tests (publish.integration.test.ts targets `runPublishPipeline`), not by direct action tests
+// (actions need a request context for `cookies()`).
 
 import { revalidatePath } from 'next/cache';
 import { Prisma } from '@prisma/client';
@@ -22,20 +22,11 @@ import {
 } from '@mizrahitality/contracts';
 import { prisma } from './prisma';
 import { requireOwner } from './auth';
-import {
-  VENUE_DESCRIPTION_MAX_LENGTH,
-  validateVenueDescription,
-  validateVenueName,
-} from './validation';
+import { validateVenueDescription, validateVenueName } from './validation';
 import { deriveSlugBase, nextAvailableSlug } from './slug';
 import { isStockImageId } from './stock-images';
 import { UploadValidationError, deleteUploadByKey, saveVenueUpload } from './uploads';
-import {
-  AiNotConfiguredError,
-  enhanceDescription,
-  generateVariantCopy,
-  isAiConfigured,
-} from './ai';
+import { generateVariantCopy, isAiConfigured } from './ai';
 import { runPublishPipeline, type PublishState } from './publish';
 
 export type BuilderState = {
@@ -253,44 +244,11 @@ export async function publishAction(
 }
 
 /**
- * Enhance the description text with AI — called directly from `<BuilderForm>` (takes an arg, returns
- * data, persists nothing). Signed-in gate only (no venue required — works pre-create). The owner
- * reviews the suggestion client-side and clicks "Use this" (fills the textarea; still Saves) or
- * "Keep mine" (dismiss). Persists nothing — `saveVenueAction` (→ `validateVenueDescription`) does that.
- */
-export async function enhanceDescriptionAction(
-  text: string,
-): Promise<{ ok: true; enhanced: string } | { ok: false; error: string }> {
-  await requireOwner();
-  if (!isAiConfigured())
-    return { ok: false, error: 'AI is not configured — set ANTHROPIC_API_KEY to use this.' };
-
-  const trimmed = text.trim();
-  if (!trimmed) return { ok: false, error: 'Write a few words first, then enhance.' };
-  if (trimmed.length > VENUE_DESCRIPTION_MAX_LENGTH) {
-    return {
-      ok: false,
-      error: `Description is too long (max ${VENUE_DESCRIPTION_MAX_LENGTH} characters).`,
-    };
-  }
-
-  try {
-    return { ok: true, enhanced: await enhanceDescription(trimmed) };
-  } catch (err) {
-    return {
-      ok: false,
-      error:
-        err instanceof AiNotConfiguredError
-          ? 'AI is not configured — set ANTHROPIC_API_KEY to use this.'
-          : 'The AI service is unavailable right now — please try again.',
-    };
-  }
-}
-
-/**
  * Regenerate one published audience page — called directly from `<RegenerateButton>`. Re-runs the
  * variant copy step, re-validates, and swaps just that `PageVariant` row. Only operates on a
- * published venue (full Re-publish handles the unpublished / all-7 case).
+ * published venue (full Re-publish handles the unpublished / all-7 case). After a successful
+ * publish `venue.description` already holds the polished text, so the regenerated variant stays
+ * consistent in voice with the other 6.
  */
 export async function regenerateVariantAction(
   visitorType: string,
@@ -303,7 +261,7 @@ export async function regenerateVariantAction(
   }
   if (!isVisitorType(visitorType)) return { ok: false, error: 'Unknown audience.' };
   if (!isAiConfigured())
-    return { ok: false, error: 'AI is not configured — set ANTHROPIC_API_KEY.' };
+    return { ok: false, error: 'AI is not configured — set GOOGLE_API_KEY.' };
 
   let result: CopyBundleResult;
   try {

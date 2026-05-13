@@ -37,11 +37,11 @@ export function PublishSection({
   }, [state.ok, router]);
 
   return (
-    <div className="space-y-2 border-t pt-6">
+    <div className="space-y-3 rounded-lg border bg-card p-6">
       <h2 className="text-lg font-semibold tracking-tight">Publish</h2>
       <p className="text-sm text-muted-foreground">
-        Publishing freezes your page address and uses AI to write a tailored version of your copy
-        for each of the 7 audiences.
+        Publishing polishes your description with AI and generates a tailored version for each of
+        the 7 audiences. Your page address is also frozen.
       </p>
 
       <form action={formAction}>
@@ -53,7 +53,7 @@ export function PublishSection({
       {!hasVenue && <p className="text-sm text-muted-foreground">Save your venue first.</p>}
       {hasVenue && !aiConfigured && (
         <p className="text-sm text-muted-foreground">
-          Publishing generates 7 audience-tailored pages with AI — set ANTHROPIC_API_KEY in
+          Publishing generates 7 audience-tailored pages with AI — set GOOGLE_API_KEY in
           apps/owner/.env to enable it.
         </p>
       )}
@@ -70,7 +70,10 @@ export function PublishSection({
       )}
 
       {state.ok && (
-        <p role="status" className="rounded-lg bg-muted px-4 py-3 text-sm">
+        <p
+          role="status"
+          className="rounded-md bg-success/10 px-4 py-3 text-sm font-medium text-success"
+        >
           ✓ Published — 7 audience-tailored pages generated.
         </p>
       )}

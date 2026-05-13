@@ -29,10 +29,12 @@ import { UploadValidationError, deleteUploadByKey, saveVenueUpload } from './upl
 import { enhanceDescription, generateVariantCopy, isAiConfigured } from './ai';
 import { runPublishPipeline, type PublishState } from './publish';
 import {
+  appendCompletedVariant,
   completePublishJob,
   createPublishJob,
   getPublishJob,
   setPublishJobProgress,
+  type CompletedVariant,
   type PublishJobStatus,
 } from './publish-jobs';
 
@@ -144,6 +146,9 @@ export async function saveVenueAction(
           },
         });
       }
+      revalidatePath('/builder');
+      revalidatePath('/dashboard');
+      revalidatePath('/preview');
       return { ok: true };
     }
 
@@ -191,6 +196,9 @@ export async function saveVenueAction(
         return { fieldErrors: { image: err.message }, values: echo };
       throw err;
     }
+    revalidatePath('/builder');
+    revalidatePath('/dashboard');
+    revalidatePath('/preview');
     return { ok: true };
   }
 
@@ -234,6 +242,9 @@ export async function saveVenueAction(
     await deleteUploadByKey(venue.imageValue);
   }
 
+  revalidatePath('/builder');
+  revalidatePath('/dashboard');
+  revalidatePath('/preview');
   return { ok: true };
 }
 
@@ -322,14 +333,25 @@ export async function startPublishAction(
   const job = createPublishJob(owner.id, 7);
 
   // Kick the pipeline off in the background. Errors here are swallowed into the job result —
-  // never thrown to the action caller (which has already returned the jobId).
+  // never thrown to the action caller (which has already returned the jobId). NOTE: do NOT call
+  // `revalidatePath` from this .then — it runs as a detached background promise with no request
+  // context, and Next throws ("revalidatePath ... during render"). The revalidate happens inside
+  // `pollPublishJobAction` instead, which IS a Server Action with a live request context.
   void runPublishPipeline(owner, {
     allowWithoutEnhanced: opts?.allowWithoutEnhanced,
-    onProgress: (done) => setPublishJobProgress(job.id, done),
+    onProgress: (done, _total, variant, result) => {
+      if (!variant || !result) {
+        // The initial 0/total tick — no variant has settled yet.
+        setPublishJobProgress(job.id, done);
+        return;
+      }
+      // A variant settled. Record it (with its tagline if validation passed) so the poller
+      // surfaces it to the client; `appendCompletedVariant` also bumps `done`.
+      appendCompletedVariant(job.id, variant, result.ok ? result.value.tagline : null);
+    },
   })
     .then((state) => {
       completePublishJob(job.id, state);
-      if (state.ok) revalidatePath('/dashboard');
     })
     .catch((err) => {
       completePublishJob(job.id, {
@@ -349,6 +371,9 @@ export type PollPublishResult =
       status: PublishJobStatus;
       done: number;
       total: number;
+      /** Variants that have settled so far, in completion order. The client diffs this against its
+       *  own seen-Set so each new entry flips the matching row to "Done!" + green-blinks it. */
+      completed: CompletedVariant[];
       result?: PublishState;
     }
   | { ok: false; error: string };
@@ -357,11 +382,21 @@ export async function pollPublishJobAction(jobId: string): Promise<PollPublishRe
   const owner = await requireOwner();
   const job = getPublishJob(jobId, owner.id);
   if (!job) return { ok: false, error: 'Unknown publish job — please try again.' };
+  // Revalidate the routes that depend on variants on the *first* terminal-successful poll —
+  // can't do this from `startPublishAction`'s background `.then` (no request context, Next throws).
+  // The client stops polling on the terminal response, so this fires at most once per job; even if
+  // a duplicate landed it would be idempotent.
+  if (job.status === 'succeeded') {
+    revalidatePath('/builder');
+    revalidatePath('/dashboard');
+    revalidatePath('/preview');
+  }
   return {
     ok: true,
     status: job.status,
     done: job.done,
     total: job.total,
+    completed: job.completed,
     result: job.result,
   };
 }
@@ -377,7 +412,7 @@ export async function pollPublishJobAction(jobId: string): Promise<PollPublishRe
  * needsEnhanceConfirm: true }` so the button can prompt the same confirm modal as Re-publish.
  */
 export type RegenerateResult =
-  | { ok: true }
+  | { ok: true; tagline: string }
   | { ok: false; error: string; errors?: string[] }
   | { ok: false; needsEnhanceConfirm: true };
 
@@ -438,5 +473,6 @@ export async function regenerateVariantAction(
 
   revalidatePath('/builder');
   revalidatePath('/dashboard');
-  return { ok: true };
+  revalidatePath('/preview');
+  return { ok: true, tagline: result.value.tagline };
 }

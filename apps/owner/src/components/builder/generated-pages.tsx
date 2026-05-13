@@ -109,8 +109,10 @@ function VariantListRow({
   published: boolean;
   customerSiteUrl: string | null;
 }) {
-  const { regenTickFor } = useBuilderShell();
+  const { regenTickFor, regenTaglineFor } = useBuilderShell();
   const tick = regenTickFor(variant);
+  const overrideTagline = regenTaglineFor(variant);
+  const displayedTagline = overrideTagline ?? tagline;
   const firstRun = useRef(true);
   const [blinking, setBlinking] = useState(false);
 
@@ -136,7 +138,7 @@ function VariantListRow({
         {status === 'missing' ? (
           <p className="text-xs text-muted-foreground italic">(missing — re-publish)</p>
         ) : status === 'ok' ? (
-          <p className="text-xs text-muted-foreground">&ldquo;{tagline}&rdquo;</p>
+          <p className="text-xs text-muted-foreground">&ldquo;{displayedTagline}&rdquo;</p>
         ) : (
           <p className="text-xs text-destructive italic">
             (stored content is unreadable — re-publish to regenerate)

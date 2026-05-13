@@ -27,8 +27,14 @@ export function RegenerateButton({ visitorType }: { visitorType: string }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const { regenDoneFor, markVariantRegenerated } = useBuilderShell();
+  const { regenDoneFor, markVariantRegenerated, regenInProgressFor } = useBuilderShell();
   const done = regenDoneFor(visitorType);
+  // Per-row "Regenerating…" state: this variant's flag is set when a full publish kicks off (for
+  // all 7) or when the user clicks Regenerate (just this one — via the local useTransition
+  // `pending`), and cleared individually when the variant settles or wholesale when the publish
+  // terminates. Read from a per-row flag rather than the global `publishPending` so a transient
+  // hiccup in that flag can't snap this single row back to "Regenerate" mid-publish.
+  const showingRegenerating = pending || regenInProgressFor(visitorType);
 
   function runRegen(allowWithoutEnhanced: boolean) {
     setError(null);
@@ -38,7 +44,7 @@ export function RegenerateButton({ visitorType }: { visitorType: string }) {
         allowWithoutEnhanced ? { allowWithoutEnhanced: true } : undefined,
       );
       if (r.ok) {
-        markVariantRegenerated(visitorType);
+        markVariantRegenerated(visitorType, r.tagline);
         router.refresh();
         return;
       }
@@ -59,10 +65,10 @@ export function RegenerateButton({ visitorType }: { visitorType: string }) {
         variant="outline"
         size="sm"
         onClick={() => runRegen(false)}
-        disabled={pending || done}
+        disabled={showingRegenerating || done}
         className={cn(done && doneClass)}
       >
-        {pending ? 'Regenerating…' : done ? 'Done!' : 'Regenerate'}
+        {done ? 'Done!' : showingRegenerating ? 'Regenerating…' : 'Regenerate'}
       </Button>
       {error && (
         <p role="alert" className="text-xs text-destructive">

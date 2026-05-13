@@ -10,13 +10,14 @@
 import { GoogleGenAI } from '@google/genai';
 import { env } from '@/lib/env';
 
-/** The model used for both AI steps (description enhance + per-variant copy). `gemini-3.1-flash-lite`
- *  gives us the best free-tier headroom of any structured-output-capable Gemini model: 15 RPM and
- *  500 RPD vs `gemini-2.5-flash-lite`'s crippling 20 RPD ceiling. Structured output
- *  (`responseSchema`/`responseMimeType: application/json`) is preserved so JSON-shape failures stay
- *  effectively impossible. (Gemma models would give higher RPD still but don't accept
- *  `responseSchema`, so we'd have to fall back to free-form JSON parsing — not worth the flakiness.) */
-export const COPY_MODEL = 'gemini-3.1-flash-lite';
+/** The model used for both AI steps (description enhance + per-variant copy). `gemini-2.5-flash-lite`
+ *  is Google's lowest-latency Gemini model that still supports structured output
+ *  (`responseSchema`/`responseMimeType: application/json`), so JSON-shape failures stay effectively
+ *  impossible. Billing is enabled on the key, so the free-tier RPD ceiling that previously drove us
+ *  to `gemini-3.1-flash-lite` no longer applies — speed wins. (Gemma models are smaller still but
+ *  don't accept `responseSchema`, so we'd have to fall back to free-form JSON parsing — not worth
+ *  the flakiness.) */
+export const COPY_MODEL = 'gemini-2.5-flash-lite';
 
 let _client: GoogleGenAI | null | undefined; // undefined = not yet resolved; null = no key configured.
 

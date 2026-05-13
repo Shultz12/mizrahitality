@@ -13,7 +13,12 @@
 // publish reverts it / a re-publish overwrites it.
 
 import { Prisma } from '@prisma/client';
-import { SLOT_SCHEMA_VERSION, allVisitorVariants, type VisitorType } from '@mizrahitality/contracts';
+import {
+  SLOT_SCHEMA_VERSION,
+  allVisitorVariants,
+  type CopyBundleResult,
+  type VisitorType,
+} from '@mizrahitality/contracts';
 import { prisma } from './prisma';
 import type { OwnerWithVenue } from './auth';
 import {
@@ -44,8 +49,14 @@ export async function runPublishPipeline(
      *  modal. Without it, an empty `enhancedDescription` short-circuits with an error — the
      *  action guards this in practice, but the pipeline keeps the defensive check. */
     allowWithoutEnhanced?: boolean;
-    /** Called after each variant completes, plus once with 0/total at the start. */
-    onProgress?: (done: number, total: number) => void;
+    /** Called after each variant completes, plus once with 0/total at the start. The `variant`
+     *  + `result` args are absent for the initial 0/total call. */
+    onProgress?: (
+      done: number,
+      total: number,
+      variant?: VisitorType,
+      result?: CopyBundleResult,
+    ) => void;
   },
 ): Promise<PublishState> {
   if (!owner.venue) return { error: 'Create your venue before publishing.' };
@@ -94,7 +105,7 @@ export async function runPublishPipeline(
         client: opts?.client,
         retries: opts?.retries,
         onProgress: opts?.onProgress
-          ? (done, t) => opts.onProgress!(done, t)
+          ? (done, t, variant, result) => opts.onProgress!(done, t, variant, result)
           : undefined,
       },
     );

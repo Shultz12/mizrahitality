@@ -30,6 +30,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
+import { allVisitorVariants } from '@mizrahitality/contracts';
 import { templateEntry } from '@/lib/templates';
 import {
   pollPublishJobAction,
@@ -70,11 +71,19 @@ type BuilderShellContextValue = {
   publishedTick: number;
   /** Bumps when a specific variant has just successfully regenerated — drives that row's blink. */
   regenTickFor: (variant: string) => number;
+  /** Latest just-regenerated tagline for `variant`, if any — lets rows paint the new copy at the
+   *  moment of the green-blink, before `router.refresh()` lands the fresh server prop. */
+  regenTaglineFor: (variant: string) => string | null;
 
   /** Publish-button "Done!" — true until the user edits anything. */
   publishDone: boolean;
   /** Per-variant "Done!" — true until the user edits anything (or re-publish wipes it). */
   regenDoneFor: (variant: string) => boolean;
+  /** Per-variant "Regenerating…" — true between publish start and that variant settling, plus
+   *  while a manual single-row regenerate is in flight. Owned per row rather than read from the
+   *  global `publishPending` so a transient blip in that flag (e.g. an unexpected
+   *  pollPublishJobAction failure) doesn't snap every row back to "Regenerate" mid-publish. */
+  regenInProgressFor: (variant: string) => boolean;
   /** Enhance-button "Enhanced ✓" — true until the user edits anything. */
   enhanceDone: boolean;
 
@@ -90,8 +99,10 @@ type BuilderShellContextValue = {
    *  returned, `source` is the typed text at enhance time (used to detect later edits). */
   setPolishedPreview: (polished: string, source: string) => void;
 
-  /** Called by RegenerateButton on a successful regen. */
-  markVariantRegenerated: (variant: string) => void;
+  /** Called by RegenerateButton on a successful regen. `tagline` (when provided) is the just-
+   *  generated bundle's tagline — stashed so <VariantListRow> can paint it on the same tick as
+   *  the green-blink, rather than waiting for `router.refresh()` to bring the new server prop. */
+  markVariantRegenerated: (variant: string, tagline?: string) => void;
   /** Called by EnhanceDescriptionPanel on a successful enhance — re-arms Publish / Regenerate
    *  Done states (an enhance changes the source text for any subsequent generation) and pins
    *  the enhance button into its own sticky-green "Enhanced ✓" state until the next edit. */
@@ -145,6 +156,9 @@ export function BuilderShell({
   });
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeJobRef = useRef<string | null>(null);
+  // Per-publish set of variants we've already signaled to the per-row blink/Done machinery.
+  // Reset at the start of every publish so a re-publish gets a fresh per-row "Done!" pass.
+  const signaledVariantsRef = useRef<Set<string>>(new Set());
 
   // ---- Dirty / Done state machine. ---------------------------------------
   // `dirtyCounter` bumps on any field change. The "Done!" snapshots store the counter value at
@@ -155,6 +169,8 @@ export function BuilderShell({
   const [publishedTick, setPublishedTick] = useState(0);
   const [regenDirty, setRegenDirty] = useState<Record<string, number>>({});
   const [regenTicks, setRegenTicks] = useState<Record<string, number>>({});
+  const [regenTaglines, setRegenTaglines] = useState<Record<string, string>>({});
+  const [regenInProgress, setRegenInProgress] = useState<Record<string, boolean>>({});
 
   // ---- Live description state for the preview. ---------------------------
   // The textarea writes to `typedDescription` on every keystroke (via the form). The Enhance
@@ -213,10 +229,19 @@ export function BuilderShell({
     setDirtyCounter((n) => n + 1);
   }, []);
 
-  const markVariantRegenerated = useCallback((variant: string) => {
+  const markVariantRegenerated = useCallback((variant: string, tagline?: string) => {
     const snapshot = dirtyCounterRef.current;
     setRegenDirty((prev) => ({ ...prev, [variant]: snapshot }));
     setRegenTicks((prev) => ({ ...prev, [variant]: (prev[variant] ?? 0) + 1 }));
+    setRegenInProgress((prev) => {
+      if (!prev[variant]) return prev;
+      const next = { ...prev };
+      delete next[variant];
+      return next;
+    });
+    if (typeof tagline === 'string') {
+      setRegenTaglines((prev) => ({ ...prev, [variant]: tagline }));
+    }
   }, []);
 
   // A successful enhance bumps the dirty counter (re-arms Publish & Regenerate "Done!" states —
@@ -256,21 +281,35 @@ export function BuilderShell({
         if (!resp.ok) {
           activeJobRef.current = null;
           setPublishPending(false);
+          setRegenInProgress({});
           setPublishState({ error: resp.error });
           return;
         }
         setPublishProgress({ done: resp.done, total: resp.total });
+        // Flip each *newly* settled variant's row to Done + green-blink, using the tagline the
+        // server collected so the row paints the new copy on the same tick as the blink. The
+        // server returns the full `completed` list each poll; the seen-Set ensures one signal
+        // per variant per publish.
+        for (const entry of resp.completed) {
+          if (signaledVariantsRef.current.has(entry.variant)) continue;
+          signaledVariantsRef.current.add(entry.variant);
+          markVariantRegenerated(entry.variant, entry.tagline ?? undefined);
+        }
         if (resp.status === 'running') {
           pollPublishJob(jobId);
           return;
         }
-        // Terminal — surface the final PublishState the same way useActionState used to.
+        // Terminal — surface the final PublishState the same way useActionState used to. Any
+        // variants still in `regenInProgress` at this point didn't get a per-variant signal (a
+        // failed publish, or partial completion) — drop them so those rows can show "Regenerate"
+        // again and the owner can retry.
         activeJobRef.current = null;
         setPublishPending(false);
+        setRegenInProgress({});
         setPublishState(resp.result ?? {});
       }, PUBLISH_POLL_INTERVAL_MS);
     },
-    [],
+    [markVariantRegenerated],
   );
 
   const beginPublishJob = useCallback(
@@ -279,10 +318,24 @@ export function BuilderShell({
       setPublishState({});
       setPublishPending(true);
       setPublishProgress({ done: 0, total: PUBLISH_TOTAL });
+      // Fresh publish — re-arm every per-row blink and reset the seen-Set so each settling
+      // variant signals once. We also clear any pre-existing per-variant Done state from a prior
+      // manual regenerate so the rows uniformly read "Regenerating…" until each one lands, and
+      // pre-fill `regenInProgress` with all 7 variants so each row stickily shows "Regenerating…"
+      // until *that* variant's completion is signaled by the polling loop.
+      signaledVariantsRef.current = new Set();
+      setRegenDirty({});
+      setRegenTaglines({});
+      setRegenInProgress(() => {
+        const seeded: Record<string, boolean> = {};
+        for (const v of allVisitorVariants()) seeded[v] = true;
+        return seeded;
+      });
       void startPublishAction(allowWithoutEnhanced ? { allowWithoutEnhanced: true } : undefined).then(
         (resp) => {
           if (!resp.ok) {
             setPublishPending(false);
+            setRegenInProgress({});
             if ('needsEnhanceConfirm' in resp) {
               // The owner needs to confirm "Generate anyway" — swap the modal mode and re-open.
               setConfirmMode('enhance-missing');
@@ -317,13 +370,13 @@ export function BuilderShell({
     if (saveState.ok) router.refresh();
   }, [saveState.ok, router]);
 
-  // After a successful publish: snapshot dirty, blink the description, drop all variant
-  // "Done!" states (the publish just regenerated all 7 variants, so per-variant Done is stale).
+  // After a successful publish: snapshot dirty, blink the description, leave per-variant Done /
+  // tagline overrides intact — they were populated incrementally by the polling loop as each
+  // parallel variant settled, and we want every row to land in "Done!" + show its new tagline.
   useEffect(() => {
     if (!publishState.ok) return;
     setLastPublishDirty(dirtyCounterRef.current);
     setPublishedTick((n) => n + 1);
-    setRegenDirty({});
     setConfirmOpen(false);
     router.refresh();
   }, [publishState.ok, router]);
@@ -338,6 +391,14 @@ export function BuilderShell({
     (variant: string) => regenTicks[variant] ?? 0,
     [regenTicks],
   );
+  const regenTaglineFor = useCallback(
+    (variant: string) => regenTaglines[variant] ?? null,
+    [regenTaglines],
+  );
+  const regenInProgressFor = useCallback(
+    (variant: string) => regenInProgress[variant] === true,
+    [regenInProgress],
+  );
 
   const ctxValue = useMemo<BuilderShellContextValue>(
     () => ({
@@ -351,8 +412,10 @@ export function BuilderShell({
       publishProgress,
       publishedTick,
       regenTickFor,
+      regenTaglineFor,
       publishDone,
       regenDoneFor,
+      regenInProgressFor,
       enhanceDone,
       typedDescription,
       setTypedDescription,
@@ -372,8 +435,10 @@ export function BuilderShell({
       publishProgress,
       publishedTick,
       regenTickFor,
+      regenTaglineFor,
       publishDone,
       regenDoneFor,
+      regenInProgressFor,
       enhanceDone,
       typedDescription,
       setTypedDescription,

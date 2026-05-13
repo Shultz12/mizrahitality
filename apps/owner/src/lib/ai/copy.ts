@@ -10,13 +10,17 @@
 //                          Content-level validation (`validateCopyBundle`: word counts, sentence
 //                          counts, char limits — things JSON schema can't express) still runs, with
 //                          ~2 retries on (validation failure | `variant` mismatch).
-//   generateAllVariants  — the 7 variants, sequentially in allVisitorVariants() order. Always
+//   generateAllVariants  — the 7 variants, fanned out in parallel via Promise.all. The output is
+//                          still in `allVisitorVariants()` order (Promise.all preserves input order
+//                          regardless of completion order); `onProgress` fires as each variant
+//                          settles, so the in-button "X / 7" still climbs monotonically — it just
+//                          climbs in completion order, not in `allVisitorVariants()` order. Always
 //                          returns length-7; the caller (lib/publish.ts) is all-or-nothing.
 //
-// Model: `gemini-3.1-flash-lite` — still supports structured output (`responseSchema` /
-// `responseMimeType: 'application/json'`) so JSON-shape failures stay impossible. Billing is
-// enabled on the key, so RPM/RPD ceilings no longer apply: there is no inter-call pacing and no
-// rate-limit back-off scaffolding — calls fire back-to-back.
+// Model: `gemini-2.5-flash-lite` — Google's lowest-latency structured-output-capable model
+// (`responseSchema` / `responseMimeType: 'application/json'` so JSON-shape failures stay
+// impossible). Billing is enabled on the key, so RPM/RPD ceilings no longer apply: there is no
+// inter-call pacing and no rate-limit back-off scaffolding — calls fire back-to-back.
 
 import {
   allVisitorVariants,
@@ -136,31 +140,43 @@ export async function generateVariantCopy(
 }
 
 /**
- * Generate all 7 variants, sequentially in `allVisitorVariants()` order. Always returns length 7;
- * `runPublishPipeline` (lib/publish.ts) decides all-or-nothing. `onProgress` is consumed by the
- * publish-job registry (lib/publish-jobs.ts) so the client can poll mid-flight progress.
+ * Generate all 7 variants in parallel — each call is independent (same enhanced source text, just
+ * a different persona block), so there's no reason to serialise them. `Promise.all` returns
+ * results in the input array's order, so the output stays in `allVisitorVariants()` order
+ * regardless of completion order; the publish persistence layer iterates in that order. Always
+ * returns length 7; `runPublishPipeline` (lib/publish.ts) decides all-or-nothing. `onProgress`
+ * fires once per variant as it settles — `done` is incremented before the callback so the count
+ * is always monotonic (JS is single-threaded; no race), but the *order* of `onProgress` calls
+ * matches completion order, not variant order. The publish-job registry (lib/publish-jobs.ts)
+ * relays `done`/`total` to the client for the in-button "X / 7" progress fill.
  */
 export async function generateAllVariants(
   args: { venueName: string; description: string },
   opts?: {
     client?: GenAiClient;
     retries?: number;
-    onProgress?: (done: number, total: number, variant: VisitorType) => void;
+    onProgress?: (
+      done: number,
+      total: number,
+      variant: VisitorType,
+      result: CopyBundleResult,
+    ) => void;
   },
 ): Promise<{ variant: VisitorType; result: CopyBundleResult }[]> {
   const c = opts?.client ?? getGenAi();
   if (!c) throw new AiNotConfiguredError();
 
   const variants = allVisitorVariants();
-  const out: { variant: VisitorType; result: CopyBundleResult }[] = [];
-  for (let i = 0; i < variants.length; i++) {
-    const variant = variants[i]!;
-    const result = await generateVariantCopy(
-      { venueName: args.venueName, description: args.description, variant },
-      { client: c, retries: opts?.retries },
-    );
-    out.push({ variant, result });
-    opts?.onProgress?.(out.length, variants.length, variant);
-  }
-  return out;
+  let done = 0;
+  return await Promise.all(
+    variants.map(async (variant) => {
+      const result = await generateVariantCopy(
+        { venueName: args.venueName, description: args.description, variant },
+        { client: c, retries: opts?.retries },
+      );
+      done += 1;
+      opts?.onProgress?.(done, variants.length, variant, result);
+      return { variant, result };
+    }),
+  );
 }

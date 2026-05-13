@@ -166,3 +166,22 @@
 .animate-fade-in-up {
   animation: fade-in-up 1s ease-out forwards;
 }
+
+/* Builder "just changed" highlight — flashes a soft success-green wash once over the affected
+   element (description textarea after Publish, a variant row after Regenerate). Color is the
+   --success token (#059669). */
+@keyframes green-blink {
+  0% {
+    background-color: rgba(5, 150, 105, 0);
+  }
+  20% {
+    background-color: rgba(5, 150, 105, 0.25);
+  }
+  100% {
+    background-color: rgba(5, 150, 105, 0);
+  }
+}
+
+.animate-green-blink {
+  animation: green-blink 1.2s ease-out 1;
+}

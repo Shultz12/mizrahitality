@@ -2,26 +2,21 @@
 
 // The venue builder form — the owner's entire input surface: a venue name (English letters +
 // spaces → the slug is derived from it), a free-text description, and one image (the <ImagePicker>:
-// a stock pick or an upload). Submits to `saveVenueAction`; on success it `router.refresh()`es so
-// the sibling <VenuePreview> Server Component re-renders with the saved content. AI enhancement
-// is no longer a separate affordance — it's folded into Publish (lib/publish.ts step 1), so this
-// form just shows a static info panel telling the owner what Publish will do with their text.
-// Mirrors the `useActionState` + manual-error-`<p>` pattern from the auth forms (no `form`/`field`
-// primitive).
+// a stock pick or an upload). Save state + action live in <BuilderShell> now (so the sticky bar's
+// Save button can drive this form via the HTML `form="save-venue-form"` attribute). On a
+// successful publish, the description textarea green-blinks once and re-syncs to the AI-polished
+// text the server just wrote.
 
-import { useActionState, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { allVisitorVariants } from '@mizrahitality/contracts';
-import { saveVenueAction, type BuilderState } from '@/lib/builder-actions';
 import { deriveSlugBase } from '@/lib/slug';
 import { templateEntry } from '@/lib/templates';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 import { ImagePicker } from './image-picker';
-
-const initialState: BuilderState = {};
+import { useBuilderShell } from './builder-shell';
 
 type FormVenue = {
   name: string;
@@ -39,14 +34,27 @@ export function BuilderForm({
   venue: FormVenue | null;
   aiConfigured: boolean;
 }) {
-  const [state, formAction, pending] = useActionState(saveVenueAction, initialState);
-  const router = useRouter();
+  const { saveFormId, saveFormAction, saveState, publishedTick, markDirty } = useBuilderShell();
+
   const [typedName, setTypedName] = useState(venue?.name ?? '');
   const [description, setDescription] = useState(venue?.description ?? '');
+  const [descriptionBlinking, setDescriptionBlinking] = useState(false);
 
+  // Re-sync the controlled description to the server's value after a successful publish (the
+  // pipeline overwrites `venue.description` with the AI-polished text, then the shell calls
+  // `router.refresh()` so this prop arrives updated) and flash it green so the change is visible.
+  const firstRun = useRef(true);
+  const venueDescription = venue?.description ?? '';
   useEffect(() => {
-    if (state.ok) router.refresh();
-  }, [state.ok, router]);
+    if (firstRun.current) {
+      firstRun.current = false;
+      return;
+    }
+    setDescription(venueDescription);
+    setDescriptionBlinking(true);
+    const t = setTimeout(() => setDescriptionBlinking(false), 1200);
+    return () => clearTimeout(t);
+  }, [publishedTick, venueDescription]);
 
   const slugPreview = venue ? venue.slug : deriveSlugBase(typedName);
   const slugNote = venue
@@ -56,7 +64,14 @@ export function BuilderForm({
     : '(created when you save)';
 
   return (
-    <form action={formAction} noValidate encType="multipart/form-data" className="space-y-6">
+    <form
+      id={saveFormId}
+      action={saveFormAction}
+      onChange={markDirty}
+      noValidate
+      encType="multipart/form-data"
+      className="space-y-6"
+    >
       <section className="flex flex-col gap-4 rounded-lg border bg-card p-6">
         <h2 className="border-b pb-2 text-base font-medium">Brand details</h2>
         <div className="space-y-1.5">
@@ -64,14 +79,14 @@ export function BuilderForm({
           <Input
             id="name"
             name="name"
-            defaultValue={state.values?.name ?? venue?.name ?? ''}
+            defaultValue={saveState.values?.name ?? venue?.name ?? ''}
             onChange={(e) => setTypedName(e.currentTarget.value)}
-            aria-invalid={state.fieldErrors?.name ? true : undefined}
-            aria-describedby={state.fieldErrors?.name ? 'name-error' : 'name-hint'}
+            aria-invalid={saveState.fieldErrors?.name ? true : undefined}
+            aria-describedby={saveState.fieldErrors?.name ? 'name-error' : 'name-hint'}
           />
-          {state.fieldErrors?.name ? (
+          {saveState.fieldErrors?.name ? (
             <p id="name-error" className="text-sm text-destructive">
-              {state.fieldErrors.name}
+              {saveState.fieldErrors.name}
             </p>
           ) : (
             <p id="name-hint" className="text-sm text-muted-foreground">
@@ -94,18 +109,22 @@ export function BuilderForm({
         <h2 className="border-b pb-2 text-base font-medium">Description</h2>
         <div className="space-y-1.5">
           <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            name="description"
-            rows={6}
-            value={description}
-            onChange={(e) => setDescription(e.currentTarget.value)}
-            aria-invalid={state.fieldErrors?.description ? true : undefined}
-            aria-describedby={state.fieldErrors?.description ? 'description-error' : undefined}
-          />
-          {state.fieldErrors?.description && (
+          <div className={cn('rounded-md', descriptionBlinking && 'animate-green-blink')}>
+            <Textarea
+              id="description"
+              name="description"
+              rows={6}
+              value={description}
+              onChange={(e) => setDescription(e.currentTarget.value)}
+              aria-invalid={saveState.fieldErrors?.description ? true : undefined}
+              aria-describedby={
+                saveState.fieldErrors?.description ? 'description-error' : undefined
+              }
+            />
+          </div>
+          {saveState.fieldErrors?.description && (
             <p id="description-error" className="text-sm text-destructive">
-              {state.fieldErrors.description}
+              {saveState.fieldErrors.description}
             </p>
           )}
 
@@ -137,26 +156,18 @@ export function BuilderForm({
       <section className="flex flex-col gap-4 rounded-lg border bg-card p-6">
         <h2 className="border-b pb-2 text-base font-medium">Photo</h2>
         <ImagePicker current={venue ? { kind: venue.imageKind, value: venue.imageValue } : null} />
-        {state.fieldErrors?.image && (
-          <p className="text-sm text-destructive">{state.fieldErrors.image}</p>
+        {saveState.fieldErrors?.image && (
+          <p className="text-sm text-destructive">{saveState.fieldErrors.image}</p>
         )}
       </section>
 
-      <div className="flex items-center gap-3">
-        <Button type="submit" disabled={pending}>
-          {pending ? 'Saving…' : venue ? 'Save changes' : 'Create venue'}
-        </Button>
-        {state.ok && (
-          <p role="status" className="text-xs font-medium text-success">
-            Saved.
-          </p>
-        )}
-      </div>
-      {state.error && (
-        <p role="alert" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      {/*
+       * Sticky-bar button submits this form via the HTML `form="..."` attribute. An sr-only
+       * submit button stays in-form so Enter inside any field still triggers a save.
+       */}
+      <button type="submit" className="sr-only" tabIndex={-1} aria-hidden="true">
+        Save changes
+      </button>
     </form>
   );
 }

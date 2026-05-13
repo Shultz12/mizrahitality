@@ -5,7 +5,6 @@ import { env } from '@/lib/env';
 import { BuilderShell } from '@/components/builder/builder-shell';
 import { BuilderForm } from '@/components/builder/builder-form';
 import { VenuePreview } from '@/components/builder/venue-preview';
-import { PublishSection } from '@/components/builder/publish-section';
 import { GeneratedPages } from '@/components/builder/generated-pages';
 
 // The venue builder — the owner's entire input surface (name → derived slug, description, image)
@@ -47,8 +46,6 @@ export default async function BuilderPage() {
           <BuilderForm venue={venue} aiConfigured={aiConfigured} />
           <VenuePreview venue={venue} />
         </div>
-
-        <PublishSection published={published} />
 
         <GeneratedPages
           variants={venue?.variants ?? []}

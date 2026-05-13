@@ -34,6 +34,7 @@ import { saveVenueAction, type BuilderState } from '@/lib/builder-actions';
 import type { PublishState } from '@/lib/publish';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { PublishConfirmModal } from './publish-confirm-modal';
 
 const SAVE_FORM_ID = 'save-venue-form';
 const PUBLISH_FORM_ID = 'publish-form';
@@ -115,6 +116,7 @@ export function BuilderShell({
   const [publishedTick, setPublishedTick] = useState(0);
   const [regenDirty, setRegenDirty] = useState<Record<string, number>>({});
   const [regenTicks, setRegenTicks] = useState<Record<string, number>>({});
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // Mirror `dirtyCounter` into a ref so success effects can read the latest value at the moment
   // of success without re-running when the counter advances later (which would re-snapshot and
@@ -147,6 +149,7 @@ export function BuilderShell({
     setLastPublishDirty(dirtyCounterRef.current);
     setPublishedTick((n) => n + 1);
     setRegenDirty({});
+    setConfirmOpen(false);
     router.refresh();
   }, [publishState.ok, router]);
 
@@ -225,8 +228,8 @@ export function BuilderShell({
             {saveLabel}
           </Button>
           <Button
-            form={PUBLISH_FORM_ID}
-            type="submit"
+            type="button"
+            onClick={() => setConfirmOpen(true)}
             disabled={publishDisabled}
             className={cn(publishDone && doneClass)}
           >
@@ -255,6 +258,15 @@ export function BuilderShell({
           </div>
         )}
       </div>
+      {/* Empty publish form — the modal's confirm button submits this via the `form` attribute.
+          Always rendered so the form exists in the DOM regardless of publish state. */}
+      <form id={PUBLISH_FORM_ID} action={publishFormAction} />
+      <PublishConfirmModal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        published={published}
+        pending={publishPending}
+      />
       {children}
     </BuilderShellContext.Provider>
   );

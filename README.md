@@ -4,7 +4,7 @@ A monorepo of two cooperating products for non-technical hospitality venue owner
 
 A venue owner signs up with an email and password, then in the builder gives a **venue name**, a **rough free-text description**, and **one image** (uploaded, or chosen from a small supplied stock set) — that's the whole input. The platform polishes the description text with AI, authors it into pre-designed per-audience templates (one page = a Rich Text slot + an Image slot), publishes a server-rendered page, and hands back an analytics dashboard. **One venue per owner.** A separate SSR visitor site renders that page per visitor type by calling the platform's REST API; the visitor type never appears in the URL or the page UI.
 
-It's a job-interview deliverable. Product rationale (and a bit of levity) lives in [`VISION.md`](VISION.md) and [`PRD.md`](PRD.md); build order, decisions, and open questions in [`NOTES.md`](NOTES.md); engineering orientation in [`CLAUDE.md`](CLAUDE.md).
+It's a job-interview deliverable. Product rationale (and a bit of levity) lives in [`VISION.md`](VISION.md) and [`PRD.md`](PRD.md); build order, decisions, and open questions in [`NOTES.md`](NOTES.md); the macro architecture (the two apps, the three core flows, the design decisions) in [`ARCHITECTURE.md`](ARCHITECTURE.md); per-file engineering orientation in [`CLAUDE.md`](CLAUDE.md).
 
 ## The two products
 
@@ -25,7 +25,8 @@ plans/               # the per-feature build plans (00-master-plan.md, then 01..
 scripts/seed.mjs     # demo seed — see "Demo accounts" below
 scripts/seed-data/   # canned per-venue copy-bundle JSON the seed reads (so it needs no API key)
 VISION.md, PRD.md    # product docs — the what and why
-NOTES.md, CLAUDE.md  # build notes / decisions; engineering orientation
+ARCHITECTURE.md      # macro architecture — the two apps, the three core flows, the design decisions
+NOTES.md, CLAUDE.md  # build notes / decisions; per-file engineering orientation
 ```
 
 ## What's in it

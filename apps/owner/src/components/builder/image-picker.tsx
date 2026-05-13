@@ -8,7 +8,7 @@
 //               → imageMode=keep                        (none chosen, but the venue already has an upload)
 //               → imageMode=upload                      (none chosen, no existing upload — server asks for one)
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { STOCK_IMAGES, STOCK_IMAGE_IDS, isStockImageId, stockImagePath } from '@/lib/stock-images';
 import type { StockImageId } from '@/lib/stock-images';
 import { cn } from '@/lib/utils';
@@ -22,7 +22,37 @@ function currentImageSrc(current: CurrentImage): string {
     : `/stock/${current.value}.jpg`;
 }
 
-export function ImagePicker({ current }: { current: CurrentImage | null }) {
+/**
+ * Has the owner picked something that the per-section "Save photo" button can actually persist?
+ *  - Stock tab: a different stock id than the current one (or current is an upload).
+ *  - Upload tab: a new file is selected. "Keep current upload" doesn't count as a change.
+ * Called only from the existing-venue flow (the new-venue flow uses the one big "Create venue"
+ * button and doesn't read this signal).
+ */
+function computeImageDirty(
+  mode: 'stock' | 'upload',
+  stockImageId: StockImageId,
+  pickedFileName: string | null,
+  current: CurrentImage | null,
+): boolean {
+  if (mode === 'stock') {
+    if (!current) return true;
+    if (current.kind !== 'stock') return true;
+    return stockImageId !== current.value;
+  }
+  // mode === 'upload' — only a freshly picked file counts as a change to save.
+  return pickedFileName !== null;
+}
+
+export function ImagePicker({
+  current,
+  onDirtyChange,
+}: {
+  current: CurrentImage | null;
+  /** Notifies the parent whenever the picker has (or no longer has) something to save. Optional —
+   *  the new-venue create flow doesn't wire it. */
+  onDirtyChange?: (dirty: boolean) => void;
+}) {
   const [mode, setMode] = useState<'stock' | 'upload'>(
     current?.kind === 'upload' ? 'upload' : 'stock',
   );
@@ -32,6 +62,11 @@ export function ImagePicker({ current }: { current: CurrentImage | null }) {
   const [pickedFileName, setPickedFileName] = useState<string | null>(null);
 
   const uploadMode = pickedFileName ? 'upload' : current?.kind === 'upload' ? 'keep' : 'upload';
+
+  const dirty = computeImageDirty(mode, stockImageId, pickedFileName, current);
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
 
   return (
     <div className="space-y-3">

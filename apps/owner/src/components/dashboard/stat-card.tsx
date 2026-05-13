@@ -13,9 +13,11 @@ export function fmtRatio(r: Ratio): string {
 
 export function StatCard({ title, value, hint }: { title: string; value: string; hint?: string }) {
   return (
-    <div className="flex flex-col gap-2 rounded-lg border bg-card p-6">
-      <p className="text-sm font-medium text-muted-foreground">{title}</p>
-      <p className="text-3xl font-semibold tracking-tight tabular-nums text-foreground">{value}</p>
+    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-6 shadow-[0_1px_0_rgba(20,17,13,0.04),0_4px_12px_-2px_rgba(20,17,13,0.06)]">
+      <p className="text-xs font-medium text-muted-foreground">{title}</p>
+      <p className="font-heading text-[36px] font-semibold leading-none tracking-tight tabular-nums text-foreground">
+        {value}
+      </p>
       {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );

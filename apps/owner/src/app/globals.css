@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-heading);
   --font-sans: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -15,6 +15,7 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-sidebar-muted: var(--sidebar-muted);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -27,6 +28,7 @@
   --color-success: var(--success);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -37,8 +39,10 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-card-header: var(--card-header);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-background-elev: var(--background-elev);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -48,43 +52,48 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Pragmatic Utility System (feature #10): hex tokens straight from the mockups —
-   very-light-gray canvas, white card surfaces, deep-slate primary, muted feedback colors.
-   Token names match shadcn's defaults so all UI primitives re-theme automatically. */
+/* Warm cream canvas, white card surfaces with a tinted header band, deep-slate foreground,
+   terracotta accent. Token names match shadcn's defaults so all UI primitives re-theme
+   automatically. */
 :root {
-  --background: #f9fafb;
-  --foreground: #111827;
+  --background: #f5f2ec;          /* warm cream canvas */
+  --background-elev: #faf7f1;     /* tinted band for card headers, hover surfaces */
+  --foreground: #14110d;
   --card: #ffffff;
-  --card-foreground: #111827;
+  --card-foreground: #14110d;
+  --card-header: #faf7f1;
   --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #0f172a;
+  --popover-foreground: #14110d;
+  --primary: #14110d;
   --primary-foreground: #ffffff;
-  --secondary: #f3f4f6;
-  --secondary-foreground: #111827;
-  --muted: #f3f4f6;
-  --muted-foreground: #6b7280;
-  --accent: #f3f4f6;
-  --accent-foreground: #111827;
-  --destructive: #dc2626;
-  --success: #059669;
-  --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #0f172a;
-  --chart-1: #111827;
-  --chart-2: #374151;
-  --chart-3: #6b7280;
-  --chart-4: #9ca3af;
-  --chart-5: #d1d5db;
-  --radius: 0.375rem;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #111827;
-  --sidebar-primary: #0f172a;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f3f4f6;
-  --sidebar-accent-foreground: #111827;
-  --sidebar-border: #e5e7eb;
-  --sidebar-ring: #0f172a;
+  --secondary: #f0ebe2;
+  --secondary-foreground: #14110d;
+  --muted: #f0ebe2;
+  --muted-foreground: #6b6358;
+  --accent: #e26a4f;              /* terracotta — brand */
+  --accent-soft: #f4d4c8;
+  --accent-foreground: #ffffff;
+  --destructive: #c24a3c;
+  --success: #5e8e5a;
+  --border: #e8e2d5;
+  --input: #e8e2d5;
+  --ring: #e26a4f;
+  --chart-1: #14110d;
+  --chart-2: #e26a4f;
+  --chart-3: #8a7d68;
+  --chart-4: #b8ac97;
+  --chart-5: #dcd3c0;
+  --radius: 0.5rem;
+  /* Sidebar — solid dark slate; the accent threads in via the active-row indicator only. */
+  --sidebar: #14110d;
+  --sidebar-foreground: #e7e1d5;
+  --sidebar-muted: #8a8175;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #14110d;
+  --sidebar-accent: #1f1a14;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #26201a;
+  --sidebar-ring: #e26a4f;
 }
 
 .dark {
@@ -169,16 +178,16 @@
 
 /* Builder "just changed" highlight — flashes a soft success-green wash once over the affected
    element (description textarea after Publish, a variant row after Regenerate). Color is the
-   --success token (#059669). */
+   --success token (#5e8e5a). */
 @keyframes green-blink {
   0% {
-    background-color: rgba(5, 150, 105, 0);
+    background-color: rgba(94, 142, 90, 0);
   }
   20% {
-    background-color: rgba(5, 150, 105, 0.25);
+    background-color: rgba(94, 142, 90, 0.22);
   }
   100% {
-    background-color: rgba(5, 150, 105, 0);
+    background-color: rgba(94, 142, 90, 0);
   }
 }
 

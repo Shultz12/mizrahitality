@@ -1,8 +1,8 @@
 'use client';
 
-// The mobile slide-over for the authed shell (feature #10). On `<md` the sidebar collapses to a
-// top bar with a wordmark + a hamburger; tapping it opens this drawer. No shadcn `Sheet` —
-// just a fixed panel + a backdrop + a `useState` boolean. Body scroll is left alone; the panel
+// The mobile slide-over for the authed shell. On `<md` the sidebar collapses to a top bar
+// with a wordmark + a hamburger; tapping it opens this drawer. No shadcn `Sheet` — just a
+// fixed panel + a backdrop + a `useState` boolean. Body scroll is left alone; the panel
 // itself scrolls when content overflows.
 
 import { useEffect, useState, type ReactNode } from 'react';
@@ -22,7 +22,7 @@ export function MobileSidebar({ footer }: { footer: ReactNode }) {
 
   return (
     <>
-      <div className="flex min-h-[56px] items-center gap-3 border-b bg-card px-4 md:hidden">
+      <div className="flex min-h-[56px] items-center gap-3 border-b border-border bg-card px-4 md:hidden">
         <button
           type="button"
           aria-label="Open navigation"
@@ -46,7 +46,7 @@ export function MobileSidebar({ footer }: { footer: ReactNode }) {
             <line x1="3" y1="14" x2="17" y2="14" />
           </svg>
         </button>
-        <Link href="/dashboard" className="text-base font-semibold tracking-tight">
+        <Link href="/dashboard" className="font-heading text-base font-semibold tracking-tight">
           Mizrahitality
         </Link>
       </div>
@@ -61,19 +61,31 @@ export function MobileSidebar({ footer }: { footer: ReactNode }) {
           />
           <aside
             className={cn(
-              'absolute inset-y-0 left-0 flex w-64 max-w-[80%] flex-col border-r bg-sidebar text-sidebar-foreground',
+              'absolute inset-y-0 left-0 flex w-64 max-w-[80%] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground',
             )}
           >
-            <div className="flex items-start justify-between border-b px-4 py-5">
-              <div>
-                <p className="text-xl font-semibold tracking-tight">Mizrahitality</p>
-                <p className="text-xs text-muted-foreground">Owner portal</p>
+            <div className="flex items-start justify-between border-b border-sidebar-border px-4 py-5">
+              <div className="flex items-center gap-3">
+                <div
+                  aria-hidden
+                  className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-accent"
+                >
+                  <span className="h-3 w-3 rounded-full bg-white/95" />
+                </div>
+                <div>
+                  <p className="font-heading text-[17px] font-semibold leading-tight tracking-tight">
+                    Mizrahitality
+                  </p>
+                  <p className="mt-0.5 text-[10px] uppercase tracking-[0.08em] text-sidebar-muted">
+                    Owner portal
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 aria-label="Close navigation"
                 onClick={() => setOpen(false)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-md text-foreground hover:bg-secondary"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent"
               >
                 <svg
                   width="18"
@@ -92,7 +104,7 @@ export function MobileSidebar({ footer }: { footer: ReactNode }) {
               </button>
             </div>
             <SidebarNav onNavigate={() => setOpen(false)} />
-            <div className="border-t p-4">{footer}</div>
+            <div className="border-t border-sidebar-border p-4">{footer}</div>
           </aside>
         </div>
       )}

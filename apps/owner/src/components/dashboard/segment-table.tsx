@@ -1,9 +1,10 @@
-// The gender×age conversion table (REQ-8 percentage (c)): one row per audience (male/female × the 3
-// age groups — `neutral` isn't an audience), showing visitors, "Book Now" clicks, and the click rate
-// (`—` for a 0-visitor segment). Plain Tailwind-styled <table> — shadcn's `table` isn't installed and
-// this doesn't warrant adding it. Server component — pure markup over server-computed `SegmentRow[]`.
+// The conversion table (REQ-8 percentage (c)): a leading "Unknown (Neutral)" row (visits/clicks
+// from `neutral` events that have no audience attached), then one row per audience (male/female ×
+// the 3 age groups). Click rate is `—` for a 0-visitor row. Plain Tailwind-styled <table> —
+// shadcn's `table` isn't installed and this doesn't warrant adding it. Server component — pure
+// markup over server-computed props.
 
-import type { SegmentRow } from '@/lib/analytics';
+import type { NeutralSegment, SegmentRow } from '@/lib/analytics';
 import { fmtRatio } from './stat-card';
 
 function audienceLabel(row: SegmentRow): string {
@@ -12,7 +13,13 @@ function audienceLabel(row: SegmentRow): string {
   return `${gender} · ${age}`;
 }
 
-export function SegmentTable({ rows }: { rows: SegmentRow[] }) {
+export function SegmentTable({
+  rows,
+  neutral,
+}: {
+  rows: SegmentRow[];
+  neutral: NeutralSegment;
+}) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -25,6 +32,12 @@ export function SegmentTable({ rows }: { rows: SegmentRow[] }) {
           </tr>
         </thead>
         <tbody>
+          <tr className="border-b">
+            <td className="py-2 pr-4">Unknown (Neutral)</td>
+            <td className="py-2 pr-4 text-right tabular-nums">{neutral.visitors}</td>
+            <td className="py-2 pr-4 text-right tabular-nums">{neutral.clicks}</td>
+            <td className="py-2 text-right tabular-nums">{fmtRatio(neutral.clickRate)}</td>
+          </tr>
           {rows.map((row) => (
             <tr key={`${row.gender}-${row.ageGroup}`} className="border-b last:border-0">
               <td className="py-2 pr-4">{audienceLabel(row)}</td>

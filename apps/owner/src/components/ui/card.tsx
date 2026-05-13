@@ -2,6 +2,10 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
+// The card surface pops off the warm cream canvas with a soft shadow + border. Its header is a
+// distinct tinted band (`bg-card-header`) with a bottom border and a small terracotta accent tick
+// — so headers visually separate from the body without being noisy.
+
 function Card({
   className,
   size = 'default',
@@ -12,7 +16,7 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        'group/card flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl',
+        'group/card flex flex-col overflow-hidden rounded-xl border border-border bg-card text-sm text-card-foreground shadow-[0_1px_0_rgba(20,17,13,0.04),0_4px_12px_-2px_rgba(20,17,13,0.06)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl',
         className,
       )}
       {...props}
@@ -24,8 +28,12 @@ function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-header"
+      data-accent="true"
       className={cn(
-        'group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-4 group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3',
+        // Distinct tinted band + bottom border + a small leading terracotta accent tick.
+        'group/card-header @container/card-header relative flex items-center gap-2.5 border-b border-border bg-card-header px-5 py-3 group-data-[size=sm]/card:px-4 has-data-[slot=card-action]:[&>[data-slot=card-title]]:flex-1',
+        // The tick — purely decorative; hides when `data-accent` is explicitly set to false.
+        'before:absolute before:left-4 before:top-1/2 before:hidden before:h-4 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-accent/85 before:content-[""] group-data-[size=sm]/card:before:h-3.5 [&[data-accent="true"]]:pl-7 [&[data-accent="true"]]:before:block',
         className,
       )}
       {...props}
@@ -38,7 +46,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="card-title"
       className={cn(
-        'font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm',
+        'font-heading text-base leading-snug font-semibold tracking-tight group-data-[size=sm]/card:text-sm',
         className,
       )}
       {...props}
@@ -60,7 +68,7 @@ function CardAction({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-action"
-      className={cn('col-start-2 row-span-2 row-start-1 self-start justify-self-end', className)}
+      className={cn('ml-auto flex items-center self-center', className)}
       {...props}
     />
   );
@@ -70,7 +78,10 @@ function CardContent({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-content"
-      className={cn('px-4 group-data-[size=sm]/card:px-3', className)}
+      className={cn(
+        'px-5 py-5 group-data-[size=sm]/card:px-4 group-data-[size=sm]/card:py-4',
+        className,
+      )}
       {...props}
     />
   );
@@ -81,7 +92,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="card-footer"
       className={cn(
-        'flex items-center rounded-b-xl border-t bg-muted/50 p-4 group-data-[size=sm]/card:p-3',
+        'flex items-center rounded-b-xl border-t border-border bg-card-header p-4 group-data-[size=sm]/card:p-3',
         className,
       )}
       {...props}

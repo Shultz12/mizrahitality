@@ -1,26 +1,24 @@
 'use client';
 
 // The builder page's outer client wrapper. Three things live here:
-//   1. The sticky top-right action bar with the Save Changes + Re-publish buttons (which scroll
-//      with the user). The save button is bound to <BuilderForm>'s form via `form="..."` (form
-//      semantics unchanged); the publish button opens the confirm modal, which calls
-//      `startPublishAction` and we then poll `pollPublishJobAction` so the in-button progress fill
-//      can advance "X / 7" as each variant completes (the Server-Action transport can't stream
-//      progress mid-action, so we run the pipeline async + poll). Save/Publish status and errors
-//      surface in the bar's status slot.
+//   1. The sticky top-right action bar with the Re-publish button (which scrolls with the user).
+//      The publish button opens the confirm modal, which calls `startPublishAction` and we then
+//      poll `pollPublishJobAction` so the in-button progress fill can advance "X / 7" as each
+//      variant completes (the Server-Action transport can't stream progress mid-action, so we
+//      run the pipeline async + poll). Publish status and errors surface in the bar's status
+//      slot. Save lives inline on each builder section — not here.
 //   2. The shared "Done!"/dirty state machine. After Publish succeeds, the Publish button stays
 //      disabled in greyed-out green ("Done!") and the description textarea flashes
 //      `animate-green-blink` once; after a per-variant Regenerate succeeds, that variant's row
 //      blinks and its button stays disabled-green. Either button re-arms the moment the user
 //      edits *anything* in the builder form (name, description, image) — a single shared dirty
-//      counter drives all three buttons.
+//      counter driven by every form's `onChange={markDirty}`.
 //   3. The publish-job polling hook itself — `triggerPublish` starts a job, then a poll timer
 //      drains `pollPublishJobAction` every PUBLISH_POLL_INTERVAL_MS until the job terminates.
 //      `activeJobRef` lets a fresh publish supersede an in-flight one cleanly.
 
 import {
   createContext,
-  useActionState,
   useCallback,
   useContext,
   useEffect,
@@ -32,34 +30,18 @@ import {
 import { useRouter } from 'next/navigation';
 import { allVisitorVariants } from '@mizrahitality/contracts';
 import { templateEntry } from '@/lib/templates';
-import {
-  pollPublishJobAction,
-  saveVenueAction,
-  startPublishAction,
-  type BuilderState,
-} from '@/lib/builder-actions';
+import { pollPublishJobAction, startPublishAction } from '@/lib/builder-actions';
 import type { PublishState } from '@/lib/publish';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PublishConfirmModal, type PublishConfirmMode } from './publish-confirm-modal';
 
-const SAVE_FORM_ID = 'save-venue-form';
 const PUBLISH_POLL_INTERVAL_MS = 600;
 const PUBLISH_TOTAL = 7;
-
-const initialBuilderState: BuilderState = {};
-
-type SaveAction = (formData: FormData) => void;
 
 type PublishProgress = { done: number; total: number };
 
 type BuilderShellContextValue = {
-  saveFormId: string;
-
-  saveState: BuilderState;
-  saveFormAction: SaveAction;
-  savePending: boolean;
-
   publishState: PublishState;
   /** Trigger a publish (start-job + poll). Wired to the modal's confirm button. */
   triggerPublish: () => void;
@@ -124,7 +106,6 @@ export function BuilderShell({
   aiConfigured,
   published,
   hasDescription,
-  isNewVenue,
   initialDescription,
   initialEnhancedDescription,
   children,
@@ -133,19 +114,12 @@ export function BuilderShell({
   aiConfigured: boolean;
   published: boolean;
   hasDescription: boolean;
-  /** When true (no venue yet), the save button reads "Create venue" instead of "Save changes". */
-  isNewVenue: boolean;
   /** Seed values for the live description state — what's currently saved on the venue. */
   initialDescription: string;
   initialEnhancedDescription: string | null;
   children: ReactNode;
 }) {
   const router = useRouter();
-
-  const [saveState, saveFormAction, savePending] = useActionState(
-    saveVenueAction,
-    initialBuilderState,
-  );
 
   // ---- Publish job state (start-action + polling). -----------------------
   const [publishState, setPublishState] = useState<PublishState>({});
@@ -364,12 +338,6 @@ export function BuilderShell({
     beginPublishJob(allowWithoutEnhanced);
   }, [publishPending, confirmMode, beginPublishJob]);
 
-  // After a successful save (router.refresh runs once on `state.ok`), the venue data is
-  // re-fetched. The save itself counts as making the form "fresh" — don't reset Done states.
-  useEffect(() => {
-    if (saveState.ok) router.refresh();
-  }, [saveState.ok, router]);
-
   // After a successful publish: snapshot dirty, blink the description, leave per-variant Done /
   // tagline overrides intact — they were populated incrementally by the polling loop as each
   // parallel variant settled, and we want every row to land in "Done!" + show its new tagline.
@@ -402,10 +370,6 @@ export function BuilderShell({
 
   const ctxValue = useMemo<BuilderShellContextValue>(
     () => ({
-      saveFormId: SAVE_FORM_ID,
-      saveState,
-      saveFormAction,
-      savePending,
       publishState,
       triggerPublish,
       publishPending,
@@ -426,9 +390,6 @@ export function BuilderShell({
       markDirty,
     }),
     [
-      saveState,
-      saveFormAction,
-      savePending,
       publishState,
       triggerPublish,
       publishPending,
@@ -453,24 +414,17 @@ export function BuilderShell({
   // Publish button visibility logic.
   const publishDisabled = !hasVenue || !aiConfigured || publishPending || publishDone;
 
-  const saveLabel = savePending ? 'Saving…' : isNewVenue ? 'Create venue' : 'Save changes';
-
   return (
     <BuilderShellContext.Provider value={ctxValue}>
       <div className="sticky top-0 z-30 -mx-6 -mt-10 mb-6 border-b border-border bg-background/85 px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="flex flex-wrap items-center justify-end gap-3">
           <div className="min-w-0 flex-1 text-right text-xs">
             <StatusSlot
-              saveState={saveState}
-              savePending={savePending}
               publishState={publishState}
               publishPending={publishPending}
               publishProgress={publishProgress}
             />
           </div>
-          <Button form={SAVE_FORM_ID} type="submit" disabled={savePending}>
-            {saveLabel}
-          </Button>
           <PublishProgressButton
             type="button"
             published={published}
@@ -539,7 +493,6 @@ function PublishProgressButton({
   disabled,
   doneState,
   onClick,
-  form,
 }: {
   type: 'button' | 'submit';
   published: boolean;
@@ -549,7 +502,6 @@ function PublishProgressButton({
   disabled: boolean;
   doneState: boolean;
   onClick?: () => void;
-  form?: string;
 }) {
   const doneClass =
     'bg-success/15 text-success hover:bg-success/15 border-success/30 cursor-default';
@@ -576,7 +528,6 @@ function PublishProgressButton({
   return (
     <Button
       type={type}
-      form={form}
       onClick={onClick}
       disabled={disabled}
       className={cn('relative overflow-hidden', doneState && doneClass)}
@@ -592,14 +543,10 @@ function PublishProgressButton({
 }
 
 function StatusSlot({
-  saveState,
-  savePending,
   publishState,
   publishPending,
   publishProgress,
 }: {
-  saveState: BuilderState;
-  savePending: boolean;
   publishState: PublishState;
   publishPending: boolean;
   publishProgress: PublishProgress;
@@ -612,7 +559,6 @@ function StatusSlot({
       </span>
     );
   }
-  if (savePending) return <span className="text-muted-foreground">Saving…</span>;
   if (publishState.ok) {
     return (
       <span className="font-medium text-success">
@@ -620,11 +566,9 @@ function StatusSlot({
       </span>
     );
   }
-  if (saveState.ok) return <span className="font-medium text-success">Saved.</span>;
   if (publishState.error && (!publishState.variantErrors || publishState.variantErrors.length === 0)) {
     return <span className="text-destructive">{publishState.error}</span>;
   }
-  if (saveState.error) return <span className="text-destructive">{saveState.error}</span>;
   return null;
 }
 

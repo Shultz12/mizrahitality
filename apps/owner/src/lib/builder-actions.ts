@@ -249,6 +249,139 @@ export async function saveVenueAction(
 }
 
 // ---------------------------------------------------------------------------
+// Per-field save actions — used by the existing-venue builder so each savable thing (name,
+// description, image) has its own inline Save button. The new-venue/create path still goes
+// through `saveVenueAction` above (it has to gather name + description + image atomically so the
+// new `Venue` row can be created with all the required fields).
+//
+// Each action: validates only its own field, short-circuits with `ok:true` when the typed value
+// already matches what's on disk, otherwise writes the one column (plus any derived columns —
+// e.g. `slug` on rename, `enhancedDescription: null` when the description text changed). All
+// three revalidate `/builder` + `/dashboard` + `/preview` like `saveVenueAction` does.
+// ---------------------------------------------------------------------------
+
+export type SaveFieldState = {
+  error?: string;
+  ok?: boolean;
+};
+
+export async function saveVenueNameAction(
+  _prev: SaveFieldState,
+  formData: FormData,
+): Promise<SaveFieldState> {
+  const owner = await requireOwner();
+  if (!owner.venue) return { error: 'Create your venue first.' };
+  const venue = owner.venue;
+
+  const rawName = String(formData.get('name') ?? '');
+  const result = validateVenueName(rawName);
+  if (!result.ok) return { error: result.message };
+  const name = result.value;
+
+  if (name === venue.name) return { ok: true };
+
+  // Slug follows the name only while it isn't locked; immutable once `slugLockedAt` is set.
+  let slug = venue.slug;
+  if (venue.slugLockedAt == null) {
+    slug = await nextAvailableSlug(deriveSlugBase(name), slugTakenInDb(venue.id));
+  }
+
+  try {
+    await prisma.venue.update({ where: { id: venue.id }, data: { name, slug } });
+  } catch (err) {
+    if (!isUniqueSlugViolation(err)) throw err;
+    const fallback = await nextAvailableSlug(
+      `${deriveSlugBase(name)}${Date.now() % 1000}`,
+      slugTakenInDb(venue.id),
+    );
+    await prisma.venue.update({ where: { id: venue.id }, data: { name, slug: fallback } });
+  }
+
+  revalidatePath('/builder');
+  revalidatePath('/dashboard');
+  revalidatePath('/preview');
+  return { ok: true };
+}
+
+export async function saveVenueDescriptionAction(
+  _prev: SaveFieldState,
+  formData: FormData,
+): Promise<SaveFieldState> {
+  const owner = await requireOwner();
+  if (!owner.venue) return { error: 'Create your venue first.' };
+  const venue = owner.venue;
+
+  const raw = String(formData.get('description') ?? '');
+  const result = validateVenueDescription(raw);
+  if (!result.ok) return { error: result.message };
+  const description = result.value;
+
+  if (description === venue.description) return { ok: true };
+
+  // Description changed → drop the stale polished version (same rule as `saveVenueAction`).
+  await prisma.venue.update({
+    where: { id: venue.id },
+    data: { description, enhancedDescription: null },
+  });
+
+  revalidatePath('/builder');
+  revalidatePath('/dashboard');
+  revalidatePath('/preview');
+  return { ok: true };
+}
+
+export async function saveVenueImageAction(
+  _prev: SaveFieldState,
+  formData: FormData,
+): Promise<SaveFieldState> {
+  const owner = await requireOwner();
+  if (!owner.venue) return { error: 'Create your venue first.' };
+  const venue = owner.venue;
+
+  const imageMode = parseImageMode(formData.get('imageMode'));
+  const rawStockImageId = String(formData.get('stockImageId') ?? '');
+  const imageEntry = formData.get('imageFile');
+  const imageFile = imageEntry instanceof File && imageEntry.size > 0 ? imageEntry : null;
+
+  let imageUpdate: { imageKind: string; imageValue: string } | undefined;
+  if (imageMode === 'stock') {
+    if (!isStockImageId(rawStockImageId)) return { error: 'Please choose a stock photo.' };
+    imageUpdate = { imageKind: 'stock', imageValue: rawStockImageId };
+  } else if (imageMode === 'upload') {
+    if (!imageFile) return { error: 'Please choose an image to upload.' };
+    try {
+      const { key } = await saveVenueUpload(venue.id, imageFile);
+      imageUpdate = { imageKind: 'upload', imageValue: key };
+    } catch (err) {
+      if (err instanceof UploadValidationError) return { error: err.message };
+      throw err;
+    }
+  } else if (imageMode === 'keep') {
+    // Owner is on the upload tab with no new file and an existing upload — nothing to save.
+    return { ok: true };
+  } else {
+    return { error: 'Please choose an image.' };
+  }
+
+  // No-op if the picked stock id is already the current image.
+  if (imageUpdate.imageKind === venue.imageKind && imageUpdate.imageValue === venue.imageValue) {
+    return { ok: true };
+  }
+
+  await prisma.venue.update({ where: { id: venue.id }, data: imageUpdate });
+
+  // Best-effort: drop the previous file off disk if we just replaced an upload.
+  if (venue.imageKind === 'upload' && venue.imageValue !== imageUpdate.imageValue) {
+    await deleteUploadByKey(venue.imageValue);
+  }
+
+  revalidatePath('/builder');
+  revalidatePath('/dashboard');
+  revalidatePath('/preview');
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
 // Feature #4 — the AI surface: enhance (separate step, post-#9), publish (generate the 7
 // variants), regenerate.
 // ---------------------------------------------------------------------------

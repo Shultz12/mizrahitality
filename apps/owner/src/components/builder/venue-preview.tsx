@@ -36,8 +36,10 @@ export function VenuePreview({ venue }: { venue: PreviewVenue | null }) {
         {venue ? (
           <>
             <div className="space-y-1">
-              <h2 className="text-lg font-semibold tracking-tight">{venue.name}</h2>
-              <p className="text-sm text-muted-foreground">/{venue.slug}</p>
+              <h2 className="font-heading text-xl font-semibold leading-tight tracking-tight">
+                {venue.name}
+              </h2>
+              <p className="font-mono text-xs text-muted-foreground">/{venue.slug}</p>
             </div>
             {/* Plain <img>: the /uploads/* route is dynamic — next/image would need extra config,
                 and this is a low-stakes internal preview. */}

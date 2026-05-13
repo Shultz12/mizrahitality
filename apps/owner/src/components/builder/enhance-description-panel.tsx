@@ -95,7 +95,7 @@ export function EnhanceDescriptionPanel({ aiConfigured }: { aiConfigured: boolea
         : 'Enhance';
 
   return (
-    <div className="space-y-2 rounded-lg border bg-secondary/40 p-3">
+    <div className="space-y-2 rounded-lg border border-border bg-background-elev p-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium">Polished description</p>
         <Button
@@ -112,7 +112,7 @@ export function EnhanceDescriptionPanel({ aiConfigured }: { aiConfigured: boolea
       {polishedPreview ? (
         <div
           className={cn(
-            'rounded-md border bg-background/60 p-3 text-sm whitespace-pre-wrap',
+            'rounded-md border border-border bg-card p-3 text-sm whitespace-pre-wrap',
             blinking && 'animate-green-blink',
           )}
         >

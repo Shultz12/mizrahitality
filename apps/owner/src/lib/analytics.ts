@@ -15,7 +15,8 @@
 //     the owner sees on their machine"); events older than the window still count in the all-time totals;
 //   • `neutral` events count in the totals / daily series / click-through %, but get no bar in the
 //     gender / age-group / clicks-by-gender charts (so when there are neutral events the bars sum to
-//     less than the totals) and never appear in the conversion table (neutral isn't an "audience");
+//     less than the totals); the conversion table prepends a single "Unknown (Neutral)" row so its
+//     visits/clicks sum back to the totals;
 //   • "total visitors" == "total visits" == the count of `visit` events (honest given `sessionId` is
 //     optional — a distinct-session count would systematically undercount).
 
@@ -91,6 +92,13 @@ export interface SegmentRow {
   clickRate: Ratio;
 }
 
+/** The conversion table's leading "Unknown (Neutral)" row — visits / clicks from `neutral` events. */
+export interface NeutralSegment {
+  visitors: number;
+  clicks: number;
+  clickRate: Ratio;
+}
+
 export interface DashboardData {
   totalVisits: number;
   bookNowClicks: number;
@@ -113,6 +121,8 @@ export interface DashboardData {
   clicksByGender: BreakdownBar[];
   /** Exactly 6 rows, in `VISITOR_GENDERS × AGE_GROUPS` order (= `allVisitorVariants()` minus `neutral`). */
   segments: SegmentRow[];
+  /** Aggregated `neutral` visits/clicks — rendered as the conversion table's first "Unknown (Neutral)" row. */
+  neutralSegment: NeutralSegment;
   /** `events.length === 0` — drives the "no analytics yet" copy. */
   isEmpty: boolean;
 }
@@ -315,7 +325,7 @@ export function computeDashboard(args: ComputeDashboardArgs): DashboardData {
     neutralClicks,
   );
 
-  // --- the 6-row gender×age conversion table -----------------------------------------------------
+  // --- the 6-row gender×age conversion table + the leading neutral row --------------------------
   const segments: SegmentRow[] = [];
   for (const gender of VISITOR_GENDERS) {
     for (const ageGroup of AGE_GROUPS) {
@@ -325,6 +335,11 @@ export function computeDashboard(args: ComputeDashboardArgs): DashboardData {
       segments.push({ gender, ageGroup, visitors, clicks, clickRate: ratio(clicks, visitors) });
     }
   }
+  const neutralSegment: NeutralSegment = {
+    visitors: neutralVisits,
+    clicks: neutralClicks,
+    clickRate: ratio(neutralClicks, neutralVisits),
+  };
 
   return {
     totalVisits,
@@ -338,6 +353,7 @@ export function computeDashboard(args: ComputeDashboardArgs): DashboardData {
     visitorsByAgeGroup,
     clicksByGender,
     segments,
+    neutralSegment,
     isEmpty: events.length === 0,
   };
 }

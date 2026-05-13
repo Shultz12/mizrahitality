@@ -57,13 +57,14 @@ export default async function BuilderPage() {
       aiConfigured={aiConfigured}
       published={published}
       hasDescription={!!venue && venue.description.trim().length > 0}
-      isNewVenue={!venue}
       initialDescription={venue?.description ?? ''}
       initialEnhancedDescription={venue?.enhancedDescription ?? null}
     >
       <div className="space-y-6">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Your venue</h1>
+          <h1 className="font-heading text-3xl font-semibold leading-tight tracking-tight">
+            Your venue
+          </h1>
           <p className="text-muted-foreground">
             A name, a description, and one photo — that&apos;s the whole builder.
           </p>
@@ -76,6 +77,7 @@ export default async function BuilderPage() {
                 ? {
                     name: venue.name,
                     slug: venue.slug,
+                    description: venue.description,
                     imageKind: venue.imageKind,
                     imageValue: venue.imageValue,
                     slugLockedAt: venue.slugLockedAt,

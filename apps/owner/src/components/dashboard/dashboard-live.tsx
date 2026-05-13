@@ -74,7 +74,7 @@ export function DashboardLive({ initialData }: { initialData: DashboardData }) {
     <section className="space-y-6">
       <div className="space-y-1">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold tracking-tight">Analytics</h2>
+          <h2 className="font-heading text-2xl font-semibold tracking-tight">Analytics</h2>
           <LiveDot />
         </div>
         {data.isEmpty ? (
@@ -135,7 +135,9 @@ export function DashboardLive({ initialData }: { initialData: DashboardData }) {
           <CardTitle>Hover &rarr; click</CardTitle>
         </CardHeader>
         <CardContent className="space-y-1">
-          <p className="text-2xl font-semibold tracking-tight tabular-nums">{fmtRatio(hbc)}</p>
+          <p className="font-heading text-[40px] font-semibold leading-none tracking-tight tabular-nums">
+            {fmtRatio(hbc)}
+          </p>
           <p className="text-sm text-muted-foreground">
             of clickers hovered the button at least once ({hbc.numerator} of {hbc.denominator}{' '}
             clicker sessions).
@@ -148,7 +150,7 @@ export function DashboardLive({ initialData }: { initialData: DashboardData }) {
           <CardTitle>Conversion by audience</CardTitle>
         </CardHeader>
         <CardContent>
-          <SegmentTable rows={data.segments} />
+          <SegmentTable rows={data.segments} neutral={data.neutralSegment} />
         </CardContent>
       </Card>
     </section>
